@@ -58,8 +58,8 @@ jobs:
 
       - name: Get Release Tags
         run: |
-          j_tag="$(sed 's/\+/\+java./' <<< ${{ github.ref_name }})" 
-          echo "JAVA_TAG=$j_tag" >> "$GITHUB_ENV"
+          j_tag=${{ github.ref_name }}
+          echo "TAG=$j_tag" >> "$GITHUB_ENV"
       
       #- name: Get Tag
       #  run: |
@@ -69,7 +69,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           #tag: "test"
-          tag: ${{ env.JAVA_TAG }}
+          #tag: ${{ env.TAG }}
+          tag: ${{ github.ref_name }}
           artifacts: "artifacts/*.jar"
           prerelease: true
           body: "pre release, do not use"
