@@ -3,7 +3,7 @@
 	"id": "easyminigame",
 	"version": "${version}",
 	"name": "EasyMiniGame",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Make mini games easily!",
 	"authors": [
 		"FBanna"
 	],
