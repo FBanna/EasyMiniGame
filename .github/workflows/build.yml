@@ -72,5 +72,5 @@ jobs:
           tag: ${{ env.JAVA_TAG }}
           artifacts: "artifacts/*.jar"
           prerelease: true
-          body: "pre release"
+          body: "pre release, do not use"
         
