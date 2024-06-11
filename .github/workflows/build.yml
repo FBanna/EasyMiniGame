@@ -46,9 +46,9 @@ jobs:
           merge-multiple: true
           path: artifacts/
       
-      - name: Get Tag
-        run: |
-          tag = "test"
+      #- name: Get Tag
+      #  run: |
+      #    tag = "test"
       
       - name: Release
         uses: ncipollo/release-action@v1
