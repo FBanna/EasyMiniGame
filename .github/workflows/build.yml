@@ -4,7 +4,10 @@
 # against bad commits.
 
 name: build
-on: [pull_request, push]
+on: 
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+\+1.20.6'
 
 jobs:
   build:
@@ -27,6 +30,11 @@ jobs:
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
+
+      - name: Export Tag
+        run: |
+          echo "RELEASE_TAG=${{ github.ref_name }}" >> "$GITHUB_ENV"
+
       - name: build
         run: ./gradlew build
       - name: capture build artifacts
@@ -47,6 +55,11 @@ jobs:
         with:
           merge-multiple: true
           path: artifacts/
+
+      - name: Get Release Tags
+        run: |
+          j_tag="$(sed 's/\+/\+java./' <<< ${{ github.ref_name }})" 
+          echo "JAVA_TAG=$j_tag" >> "$GITHUB_ENV"
       
       #- name: Get Tag
       #  run: |
@@ -55,7 +68,8 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          tag: "test"
+          #tag: "test"
+          tag: ${{ env.JAVA_TAG }}
           artifacts: "artifacts/*.jar"
           prerelease: true
           body: "testbody"
