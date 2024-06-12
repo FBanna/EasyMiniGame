@@ -3,6 +3,7 @@ package fbanna.easyminigame.mixin;
 
 import com.mojang.authlib.GameProfile;
 import fbanna.easyminigame.EasyMiniGame;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -58,6 +59,8 @@ public abstract class MixinDeath extends PlayerEntity{
 
     @Shadow public abstract boolean teleport(ServerWorld world, double destX, double destY, double destZ, Set<PositionFlag> flags, float yaw, float pitch);
 
+    @Shadow protected abstract void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition);
+
     @Inject(method = "onDeath", at = @At("HEAD"), cancellable = true)
     private void inject(DamageSource damageSource, CallbackInfo ci) {
 
@@ -77,13 +80,13 @@ public abstract class MixinDeath extends PlayerEntity{
                 if(result){
 
                     this.changeGameMode(GameMode.SPECTATOR);
-                    MANAGER.messagePlayers(Text.of(this.getName().getString() + " was final killed"));
+                    MANAGER.messagePlayers(Text.of(this.getName().getString() + " was final killed"), false);
 
                 } else {
                     Text text = this.getDamageTracker().getDeathMessage();
                     //MANAGER.messagePlayers(Text.of(this.getName().getString() + " was massacred"));
                     //MANAGER.messagePlayers(text.getWithStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.AQUA))));
-                    MANAGER.messagePlayers(text);
+                    MANAGER.messagePlayers(text, false);
                     MANAGER.respawnPlayer(this.getUuid());
                 }
 

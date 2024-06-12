@@ -9,12 +9,14 @@ import fbanna.easyminigame.config.GetConfig;
 import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.WinConditions;
 import net.minecraft.command.argument.GameModeArgumentType;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.world.GameMode;
 import org.apache.logging.log4j.core.appender.rolling.action.IfAll;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class GameCommand {
@@ -209,6 +211,102 @@ public class GameCommand {
         }
 
         ctx.getSource().sendFeedback(() -> Text.literal("players have " + optionalGame.get().getLives() + " lives"), false);
+    }
+
+    public static void addChestReGen(CommandContext<ServerCommandSource> ctx) {
+        String name = StringArgumentType.getString(ctx, "gameName");
+        int ticks = IntegerArgumentType.getInteger(ctx, "ticks");
+
+        Optional<Game> optionalGame = Game.getGame(name);
+
+        if(optionalGame.isEmpty()){
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
+            return;
+        }
+
+        optionalGame.get().addChestReGen(ticks);
+
+        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+
+        if(result) {
+            ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
+        } else {
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+        }
+    }
+
+    public static void removeChestReGen(CommandContext<ServerCommandSource> ctx) {
+        String name = StringArgumentType.getString(ctx, "gameName");
+        int index = IntegerArgumentType.getInteger(ctx, "index");
+
+        Optional<Game> optionalGame = Game.getGame(name);
+
+        if(optionalGame.isEmpty()){
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
+            return;
+        }
+
+        List<Integer> ticks = optionalGame.get().getChestReGen();
+
+        if(index < 0 || index > ticks.size()-1) {
+            ctx.getSource().sendFeedback(() -> Text.literal("Invalid index!"), false);
+            return;
+        }
+
+        optionalGame.get().removeChestReGen(index);
+
+        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+
+        if(result) {
+            ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
+        } else {
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+        }
+    }
+
+    public static void clearChestReGens(CommandContext<ServerCommandSource> ctx) {
+        String name = StringArgumentType.getString(ctx, "gameName");
+
+        Optional<Game> optionalGame = Game.getGame(name);
+
+        if(optionalGame.isEmpty()){
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
+            return;
+        }
+
+        optionalGame.get().clearChestReGen();
+
+        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+
+        if(result) {
+            ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
+        } else {
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+        }
+    }
+
+    public static void listChestReGen(CommandContext<ServerCommandSource> ctx) {
+        String name = StringArgumentType.getString(ctx, "gameName");
+
+        Optional<Game> optionalGame = Game.getGame(name);
+
+        if(optionalGame.isEmpty()){
+            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
+            return;
+        }
+
+        List<Integer> ticks = optionalGame.get().getChestReGen();
+
+        if(ticks.isEmpty()) {
+            ctx.getSource().sendFeedback(() -> Text.literal("No re-gens found!"), false);
+            return;
+        }
+
+        ctx.getSource().sendFeedback(() -> Text.literal("Found " + ticks.size() + " re-gens!"), false);
+
+        for(int tick: ticks) {
+            ctx.getSource().sendFeedback(() -> Text.literal("re-gen at " + tick), false);
+        }
     }
 
     /*

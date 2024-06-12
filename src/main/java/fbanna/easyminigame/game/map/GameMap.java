@@ -31,6 +31,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.structure.StructureTemplate;
@@ -38,6 +39,7 @@ import net.minecraft.structure.StructureTemplateManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.Nullable;
@@ -218,72 +220,73 @@ public class GameMap {
 
     }
 
-    public void resetMap(MinecraftServer server, boolean reset) {
+    public void clearChests(MinecraftServer server) {
+        for (LootChest chest: this.chestPos) {
+            if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
 
+                ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+
+                if(chest.lootTable() != null && block != null) {
+                    block.clear();
+                    block.setLootTable(null);
+                } else {
+                    EasyMiniGame.LOGGER.info("failed to clear");
+                }
+
+            } else {
+                EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+            }
+        }
+    }
+
+    public void genChests(MinecraftServer server) {
+        for(LootChest chest: this.chestPos) {
+
+            if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
+
+                ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+
+                if(chest.lootTable() != null && block != null) {
+                    block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
+                } else {
+                    EasyMiniGame.LOGGER.info("invalid loot table or chest position");
+                }
+
+            } else {
+                EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+            }
+
+
+
+        }
+    }
+
+    public void killItems(MinecraftServer server) {
         List<Entity> entities = new ArrayList<>();
         Predicate<Entity> predicate = entity -> true;
-        //getWorld(server).collect
         getWorld(server).collectEntitiesByType(TypeFilter.instanceOf(ItemEntity.class), predicate,entities);
 
         for(Entity entity: entities) {
             entity.kill();
         }
+    }
+    public void resetMap(MinecraftServer server, boolean reset) {
 
-        try{
-            for (LootChest chest: this.chestPos) {
-                if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
+        killItems(server);
 
-                    ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
-
-                    if(chest.lootTable() != null && block != null) {
-                        block.clear();
-                        block.setLootTable(null);
-                    } else {
-                        EasyMiniGame.LOGGER.info("failed to clear");
-                    }
-
-                } else {
-                    EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
-                }
-            }
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info("failed to clear chest!" + e);
-        }
+        clearChests(server);
 
         if(reset) {
             this.load(server);
         }
 
-        try {
-            for(LootChest chest: this.chestPos) {
-
-                if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
-
-                    ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
-
-                    if(chest.lootTable() != null && block != null) {
-                        block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
-                    } else {
-                        EasyMiniGame.LOGGER.info("invalid loot table or chest position");
-                    }
-
-                } else {
-                    EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
-                }
-
-
-
-            }
-        } catch (Exception e ){
-            EasyMiniGame.LOGGER.info(String.valueOf("c| " + e));
-        }
-
-
-
+        genChests(server);
 
     }
 
     public void save(MinecraftServer server) {
+
+        clearChests(server); // clear chests so no loot is saved
 
         StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
 

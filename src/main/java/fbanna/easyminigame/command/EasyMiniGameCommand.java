@@ -120,7 +120,29 @@ public class EasyMiniGameCommand {
                                                     GameCommand.getWinCondition(ctx);
                                                     return 1;
                                                 })))*/
-
+                                .then(CommandManager.literal("chestregen")
+                                        .then(CommandManager.literal("clear")
+                                                .executes(ctx-> {
+                                                    GameCommand.clearChestReGens(ctx);
+                                                    return 1;
+                                                }))
+                                        .then(CommandManager.literal("list")
+                                                .executes(ctx -> {
+                                                    GameCommand.listChestReGen(ctx);
+                                                    return 1;
+                                                }))
+                                        .then(CommandManager.literal("remove")
+                                                .then(CommandManager.argument("index", IntegerArgumentType.integer())
+                                                        .executes(ctx-> {
+                                                            GameCommand.removeChestReGen(ctx);
+                                                            return 1;
+                                                        })))
+                                        .then(CommandManager.literal("add")
+                                                .then(CommandManager.argument("ticks", IntegerArgumentType.integer())
+                                                        .executes(ctx -> {
+                                                            GameCommand.addChestReGen(ctx);
+                                                            return 1;
+                                                        }))))
                                 .then(CommandManager.literal("lives")
                                         .then(CommandManager.literal("get")
                                                 .executes(ctx -> {

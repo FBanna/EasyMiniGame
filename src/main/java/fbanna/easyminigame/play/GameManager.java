@@ -20,6 +20,7 @@ import net.minecraft.world.GameMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static fbanna.easyminigame.EasyMiniGame.MANAGER;
 import static fbanna.easyminigame.EasyMiniGame.TIMER;
 import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 
@@ -92,6 +93,33 @@ public class GameManager {
                 }
             }
         }));
+
+        List<Integer> ticks = this.game.getChestReGen();
+
+        if(ticks.size() != 0) {
+
+            TIMER.register(new TimerEvent(ticks.get(0), new Call() {
+                List<Integer> regen = new ArrayList<>(ticks); //[20,40,50]
+                @Override
+                public void call() {
+                    regen.removeFirst();
+                    if(MANAGER.playState == PlayStates.PLAYING) {
+                        map.clearChests(server);
+                        map.genChests(server);
+
+                        MANAGER.messagePlayers(Text.literal("Re-generated chests!"), true);
+
+                        if(regen.size() > 0) {
+                            TIMER.register(new TimerEvent(regen.getFirst(), this));
+                        }
+
+                    }
+                }
+            }));
+
+        }
+
+
 
         this.map.resetMap(this.server, this.game.getReload());
 
@@ -181,6 +209,13 @@ public class GameManager {
     }
 
     public void stop() {
+
+        if(this.map != null) {
+            this.map.killItems(server);
+        }
+
+
+
 
         List<PlayerState> temp = new ArrayList<>();
 
@@ -298,7 +333,7 @@ public class GameManager {
                                 EasyMiniGame.LOGGER.info("winning team is " + winning);
 
                                 if(winning != -1) {
-                                    messagePlayers(Text.of("Team " + winning + " wins").copy().formatted(Formatting.AQUA));
+                                    messagePlayers(Text.of("Team " + winning + " wins").copy().formatted(Formatting.AQUA), false);
                                     stop();
 
                                     //code here for party game set up
@@ -345,14 +380,14 @@ public class GameManager {
         return false;
     }
 
-    public void messagePlayers(Text message) {
+    public void messagePlayers(Text message, boolean overlay) {
         for( int i = 0; i < this.teams.size(); i++ ) {
             for( int j = 0; j < this.teams.get(i).size(); j++ ) {
 
                 Optional<ServerPlayerEntity> player = UUIDtoPlayer(this.teams.get(i).get(j));
 
                 if(player.isPresent()) {
-                    player.get().sendMessage(message.copy().formatted(Formatting.AQUA));
+                    player.get().sendMessage(message.copy().formatted(Formatting.AQUA), overlay);
                 }
 
             }
