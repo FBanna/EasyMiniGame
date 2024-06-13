@@ -9,6 +9,18 @@ import fbanna.easyminigame.game.WinConditions;
 import fbanna.easyminigame.game.map.GameMap;
 import fbanna.easyminigame.timer.Call;
 import fbanna.easyminigame.timer.TimerEvent;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.CobwebBlock;
+import net.minecraft.block.HoneyBlock;
+import net.minecraft.entity.attribute.*;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerAbilities;
+import net.minecraft.item.Items;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.*;
@@ -16,8 +28,12 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.dimension.DimensionType;
+import org.apache.http.config.Registry;
+import org.joml.Matrix3dStack;
 
 import java.util.*;
+import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 
 import static fbanna.easyminigame.EasyMiniGame.MANAGER;
@@ -76,6 +92,36 @@ public class GameManager {
         }
     }
 
+    public void releasePlayers() {
+
+        int i = 0;
+        for(List<UUID> team: this.teams) {
+
+            Vec3d pos = this.map.getSpawnPoint(i).pos().toCenterPos().offset(Direction.UP, 0.5);
+            int yaw = this.map.getSpawnPoint(i).yaw();
+
+            for(UUID uuid: team) {
+
+                Optional<ServerPlayerEntity> playerEntity = UUIDtoPlayer(uuid);
+
+                if(playerEntity.isPresent()) {
+
+                    ServerPlayerEntity player = playerEntity.get();
+
+                    player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+
+                    player.changeGameMode(this.game.getGameMode());
+
+                }
+
+
+            }
+            i++;
+        }
+
+
+    }
+
     public void startGame() {
 
         playState = PlayStates.PLAYING;
@@ -85,11 +131,12 @@ public class GameManager {
             @Override
             public void call() {
                 loops--;
-                countdown(loops);
+                MANAGER.countdown(loops);
                 if(loops != 0) {
                     TIMER.register(new TimerEvent(20, this));
                 } else {
                     EasyMiniGame.LOGGER.info("lower gates");
+                    MANAGER.releasePlayers();
                 }
             }
         }));
@@ -135,6 +182,7 @@ public class GameManager {
                 this.players.add(new PlayerState(player.get()));
             }
         }
+
         this.playingPlayers = new ArrayList<>();
 
 
@@ -165,7 +213,8 @@ public class GameManager {
 
                     player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
                     player.getInventory().clear();
-                    player.changeGameMode(this.game.getGameMode());
+                    //player.changeGameMode(this.game.getGameMode());
+                    player.changeGameMode(GameMode.SPECTATOR);
                     player.setHealth(20);
                     player.getHungerManager().setSaturationLevel(5);
                     player.getHungerManager().setFoodLevel(20);
@@ -249,7 +298,8 @@ public class GameManager {
 
     public void countdown(int number) {
         for(ServerPlayerEntity onlinePlayer: this.server.getPlayerManager().getPlayerList()) {
-            onlinePlayer.sendMessage(Text.literal(String.valueOf(number)).formatted(Formatting.BOLD).formatted(Formatting.DARK_RED), true);
+
+            onlinePlayer.sendMessage(Text.literal(String.valueOf(number)).formatted(Formatting.BOLD, Formatting.RED), true);
         }
     }
 
