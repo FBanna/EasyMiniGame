@@ -72,9 +72,9 @@ jobs:
           # Only include this section if you wish to publish
           # your assets on Modrinth.
           #tag: ${{ github.ref_name }}
-          loaders: fabric
-          modrinth-id: 'gyxlmoNR'
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          loaders: "fabric"
+          modrinth-id: "gyxlmoNR"
+          modrinth-token: "${{ secrets.MODRINTH_TOKEN }}"
           files: "artifacts/*.jar"
 
         #uses: cloudnode-pro/modrinth-publish@1.0.0
