@@ -88,7 +88,8 @@ public class GameManager {
 
     private void sendInvite() {
         for(ServerPlayerEntity player: this.server.getPlayerManager().getPlayerList()) {
-            player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/joinemg"))), false);
+            //player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/joinemg"))), false);
+            player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/joinemg")).withFormatting(Formatting.YELLOW)), false);
         }
     }
 
@@ -409,7 +410,7 @@ public class GameManager {
     public int teamAlive() {
         int winning = -1;
         for (int i = 0; i < this.teams.size(); i++) {
-            if(!teamIsAlive(i)) {
+            if(teamIsAlive(i)) {
                 if(winning == -1) {
                     winning = i;
                 } else {
