@@ -55,15 +55,6 @@ jobs:
         with:
           merge-multiple: true
           path: artifacts/
-
-      - name: Get Release Tags
-        run: |
-          j_tag=${{ github.ref_name }}
-          echo "TAG=$j_tag" >> "$GITHUB_ENV"
-      
-      #- name: Get Tag
-      #  run: |
-      #    tag = "test"
       
       - name: Release
         uses: ncipollo/release-action@v1
@@ -74,4 +65,13 @@ jobs:
           artifacts: "artifacts/*.jar"
           prerelease: false
           body: "pre release, do not use"
-        
+
+      - name: Modrinth
+        uses: cloudnode-pro/modrinth-publish@1.0.0
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: gyxlmoNR
+          file: "artifacts/*.jar"
+          loaders: "fabric"
+          api-domain: api.modrinth.com
+
