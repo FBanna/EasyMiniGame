@@ -76,7 +76,8 @@ jobs:
           modrinth-id: gyxlmoNR
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           loaders: fabric
-          files: "artifacts/*.jar"
+          version-type: release
+          files: artifacts/*.jar
 
         #uses: cloudnode-pro/modrinth-publish@1.0.0
         #with:
