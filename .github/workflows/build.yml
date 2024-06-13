@@ -67,14 +67,15 @@ jobs:
           body: "pre release, do not use"
 
       - name: Modrinth
-        uses: Kir-Antipov/mc-publish@v3.3
+        uses: Kir-Antipov/mc-publish@v3.3.0
         with:
           # Only include this section if you wish to publish
           # your assets on Modrinth.
           #tag: ${{ github.ref_name }}
-          loaders: "fabric"
-          modrinth-id: "gyxlmoNR"
-          modrinth-token: "${{ secrets.MODRINTH_TOKEN }}"
+
+          modrinth-id: gyxlmoNR
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          loaders: fabric
           files: "artifacts/*.jar"
 
         #uses: cloudnode-pro/modrinth-publish@1.0.0
