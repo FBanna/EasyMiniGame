@@ -2,6 +2,7 @@ package fbanna.easyminigame.command.commands;
 
 import com.mojang.brigadier.context.CommandContext;
 import fbanna.easyminigame.dimension.MiniGameDimension;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -12,6 +13,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 
 import java.util.Optional;
@@ -38,24 +40,28 @@ public class DebugCommand {
         ServerPlayerEntity player = ctx.getSource().getPlayer();
 
         if (ctx.getSource().getWorld().getRegistryKey() == MiniGameDimension.EMG_DIMENSION_KEY && player != null) {
+            //player.getRespawnTarget(true, TeleportTarget.PostDimensionTransition.new)
+            player.teleportTo(player.getRespawnTarget(true, Entity::resetPosition));
+
+            /*
 
             if (player.getSpawnPointDimension() != null && player.getSpawnPointPosition() != null){
 
                 if (player.getSpawnPointDimension() != MiniGameDimension.EMG_DIMENSION_KEY) {
 
-                    BlockPos respawnPosition = player.getSpawnPointPosition();
-                    ServerWorld destination = ctx.getSource().getServer().getWorld(player.getSpawnPointDimension());
-                    Optional<Vec3d> pos = PlayerEntity.findRespawnPosition(destination, respawnPosition, 0, true, true);
+                    //BlockPos pos = player.getSpawnPointPosition();
 
-                    if (pos.isPresent()){
+                    //ServerWorld destination = ctx.getSource().getServer().getWorld(player.getSpawnPointDimension());
+                    //Optional<Vec3d> pos = PlayerEntity.findRespawnPosition(destination, respawnPosition, 0, true, true);
 
-                        ctx.getSource().getPlayer().teleport(destination, pos.get().x, pos.get().y, pos.get().z, 0,0);
+                    //if (pos){
+                    //ctx.getSource().getPlayer().teleport(destination, pos.getX(), pos.getY(), pos.getZ(), 0,0);
 
-                    } else {
+                    //} else {
 
-                        worldRespawn(ctx);
+                    //    worldRespawn(ctx);
 
-                    }
+                    //}
 
                 } else {
 
@@ -67,7 +73,7 @@ public class DebugCommand {
 
                 worldRespawn(ctx);
 
-            }
+            }*/
 
         } else {
 
@@ -79,15 +85,5 @@ public class DebugCommand {
 
     private static RegistryKey<World> wrapRegistryKey(Identifier dimID) {
         return RegistryKey.of(RegistryKeys.WORLD, dimID);
-    }
-
-    private static void worldRespawn(CommandContext<ServerCommandSource> ctx){
-
-        ServerWorld destination = ctx.getSource().getServer().getWorld(World.OVERWORLD);
-
-        BlockPos pos = ctx.getSource().getWorld().getSpawnPos();
-
-        ctx.getSource().getPlayer().teleport(destination, pos.getX(), pos.getY(), pos.getZ(), 0,0);
-
     }
 }

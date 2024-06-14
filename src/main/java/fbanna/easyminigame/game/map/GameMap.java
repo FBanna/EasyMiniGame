@@ -159,7 +159,8 @@ public class GameMap {
     public Optional<Vec3i> getTemplateDimensions(MinecraftServer server) {
         StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
 
-        Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
+        //Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
+        Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
 
         if(template.isPresent()) {
             return Optional.ofNullable(template.get().getSize());
@@ -197,7 +198,8 @@ public class GameMap {
 
         StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
 
-        Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
+        //Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
+        Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
 
         BlockPos corner1 = getBoundaries().getCorner1();
         BlockPos corner2 = getBoundaries().getCorner2();
@@ -290,7 +292,8 @@ public class GameMap {
 
         StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
 
-        StructureTemplate template = manager.getTemplateOrBlank(new Identifier(this.getName()));
+        //StructureTemplate template = manager.getTemplateOrBlank(new Identifier(this.getName()));
+        StructureTemplate template = manager.getTemplateOrBlank(Identifier.of(this.getName()));
 
         BlockPos corner1 = getBoundaries().getCorner1();
         BlockPos corner2 = getBoundaries().getCorner2();
@@ -309,7 +312,8 @@ public class GameMap {
         template.setAuthor("easyminigame");
 
         try {
-            manager.saveTemplate(new Identifier(this.getName()));
+            //manager.saveTemplate(new Identifier(this.getName()));
+            manager.saveTemplate(Identifier.of(this.getName()));
         } catch (Exception e) {
             EasyMiniGame.LOGGER.info(String.valueOf(e));
         }

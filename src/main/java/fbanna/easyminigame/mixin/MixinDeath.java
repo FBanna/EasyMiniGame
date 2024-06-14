@@ -75,7 +75,9 @@ public abstract class MixinDeath extends PlayerEntity{
                 boolean result = MANAGER.playDeath(this.getUuid());
 
 
-                this.drop(damageSource);
+                //this.drop(damageSource);
+                //this.dropInventory();
+                this.drop((ServerWorld) this.getWorld(), damageSource);
 
                 if(result){
 
