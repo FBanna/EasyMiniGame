@@ -77,7 +77,8 @@ jobs:
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           loaders: fabric
           version-type: release
-          files: artifacts/*.jar
+          files: |
+            artifacts/!(*-@(dev|sources|javadoc)).jar
 
         #uses: cloudnode-pro/modrinth-publish@1.0.0
         #with:
