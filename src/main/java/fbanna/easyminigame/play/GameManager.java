@@ -8,6 +8,7 @@ import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.WinConditions;
 import fbanna.easyminigame.game.map.GameMap;
 import fbanna.easyminigame.timer.Call;
+import fbanna.easyminigame.timer.Timer;
 import fbanna.easyminigame.timer.TimerEvent;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -132,7 +133,9 @@ public class GameManager {
             @Override
             public void call() {
                 loops--;
-                MANAGER.countdown(loops);
+
+                MANAGER.messagePlayers(Text.translatable(String.valueOf(loops)).formatted(Formatting.RED), true);
+                //MANAGER.countdown(loops);
                 if(loops != 0) {
                     TIMER.register(new TimerEvent(20, this));
                 } else {
@@ -260,12 +263,11 @@ public class GameManager {
 
     public void stop() {
 
+        TIMER.clear();
+
         if(this.map != null) {
             this.map.killItems(server);
         }
-
-
-
 
         List<PlayerState> temp = new ArrayList<>();
 
@@ -295,13 +297,6 @@ public class GameManager {
         this.teams.clear(); // TEMP
         this.playingPlayers.clear();
         this.playState = PlayStates.STOPPED;
-    }
-
-    public void countdown(int number) {
-        for(ServerPlayerEntity onlinePlayer: this.server.getPlayerManager().getPlayerList()) {
-
-            onlinePlayer.sendMessage(Text.literal(String.valueOf(number)).formatted(Formatting.BOLD, Formatting.RED), true);
-        }
     }
 
     private  List<List<UUID>> chop(List<UUID> list) {
@@ -438,7 +433,7 @@ public class GameManager {
                 Optional<ServerPlayerEntity> player = UUIDtoPlayer(this.teams.get(i).get(j));
 
                 if(player.isPresent()) {
-                    player.get().sendMessage(message.copy().formatted(Formatting.AQUA), overlay);
+                    player.get().sendMessage(message, overlay);
                 }
 
             }

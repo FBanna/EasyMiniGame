@@ -18,17 +18,29 @@ public class Timer {
 
     public void update() {
 
-        Set<TimerEvent> copy = new HashSet<>(this.queue);
+        if(queue.size() != 0) {
 
-        for (Iterator<TimerEvent> iterator = copy.iterator(); iterator.hasNext();) {
-            TimerEvent event = iterator.next();
+            Set<TimerEvent> copy = new HashSet<>(this.queue);
 
-            boolean result = event.update();
-            if(result) {
-                iterator.remove();
+            for (Iterator<TimerEvent> iterator = copy.iterator(); iterator.hasNext();) {
+                TimerEvent event = iterator.next();
+
+                boolean result = event.update();
+                if(result) {
+                    iterator.remove();
+                }
+
             }
 
         }
+
+
+    }
+
+    public void clear() {
+
+        queue = new HashSet<>();
+
     }
 
 }
