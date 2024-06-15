@@ -1,3 +1,5 @@
+**No development on this branch. Please update to 1.21 for updates**
+
 This entirely server side mod allows for highly customizable mini games to quickly make games within Minecraft. Ideal for SMP as it saves the players data (inventory, position, world, xp etc.) before the start of a game and restores it at the end. The minigames exist in a custom dimension so does not interfere with the world. At the moment it is developed for making survival games but I will expand it to adopt new games like, dropper, bedwars, bridge, and a parkour game. Every map is tied to a game and the maps config is within easyminigame/(gamename)/(mapname)/config.json
 
 **Commands**
