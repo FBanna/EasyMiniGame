@@ -4,7 +4,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import fbanna.easyminigame.EasyMiniGame;
+import fbanna.easyminigame.command.CommandUtil;
 import fbanna.easyminigame.config.GenConfig;
 import fbanna.easyminigame.config.GetConfig;
 import fbanna.easyminigame.dimension.MiniGameDimension;
@@ -23,95 +25,76 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.apache.http.config.Registry;
 
+import static fbanna.easyminigame.command.CommandUtil.*;
+
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class MapCommand {
 
-    public static void create(CommandContext<ServerCommandSource> ctx) {
+    public static void create(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String gameName = StringArgumentType.getString(ctx, "gameName");
+        Game game = getGame(ctx);
         String mapName = StringArgumentType.getString(ctx, "mapName");
         int teamCount = IntegerArgumentType.getInteger(ctx, "teamCount");
 
-        Optional<Game> game = Game.getGame(gameName);
 
-        if(!game.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        if (game.getPlayers() % teamCount != 0) {
+            throw new SimpleCommandExceptionType(Text.of("Un-even teams! Please enter valid team number!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Un-even teams! Please enter valid team number"), false);
+            //return;
         }
 
-        if (game.get().getPlayers() % teamCount != 0) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Un-even teams! Please enter valid team number"), false);
-            return;
-        }
-
-        Optional<GameMap> foundmaps = GameMap.getMap(game.get(), mapName);
+        Optional<GameMap> foundmaps = GameMap.getMap(game, mapName);
 
         if(foundmaps.isPresent()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Map already existed!"), false);
-            return;
+            throw new SimpleCommandExceptionType(Text.of("Map already exists!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Map already existed!"), false);
+            //return;
         }
 
         GameMap map = new GameMap(mapName, teamCount);
 
-        boolean result = map.create(game.get());
+        boolean result = map.create(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully created map!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not create map!"), false);
+            throw new SimpleCommandExceptionType(Text.of("Could not create map!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not create map!"), false);
         }
     }
 
-    public static void delete(CommandContext<ServerCommandSource> ctx) {
+    public static void delete(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
 
-        Optional<Game> game = Game.getGame(name);
-
-        if(game.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
-
-        if(map.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        Optional<Boolean> result = map.get().delete(game.get());
+        Optional<Boolean> result = map.delete(game);
 
         if(result.isPresent()) {
             if (result.get()) {
                 ctx.getSource().sendFeedback(() -> Text.literal("Successfully deleted map!"), false);
             } else {
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
+                throw new SimpleCommandExceptionType(Text.of("Could not find map!")).create();
+                //ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
             }
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not delete map!"), false);
+            throw new SimpleCommandExceptionType(Text.of("Could not delete map!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not delete map!"), false);
         }
 
     }
 
 
 
-    public static void list(CommandContext<ServerCommandSource> ctx) {
+    public static void list(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
+        Game game = getGame(ctx);
 
-        Optional<Game> game = Game.getGame(name);
-
-        if(game.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<ArrayList<GameMap>> optionalGameMaps = GetConfig.getMaps(game.get());
+        Optional<ArrayList<GameMap>> optionalGameMaps = GetConfig.getMaps(game);
 
         if(optionalGameMaps.isPresent()) {
 
@@ -121,98 +104,60 @@ public class MapCommand {
                     ctx.getSource().sendFeedback(() -> Text.literal(maps.getName()), false);
                 }
             } else {
-                ctx.getSource().sendFeedback(() -> Text.literal("No maps found!" ), false);
+                throw new SimpleCommandExceptionType(Text.of("No maps found!")).create();
+                //ctx.getSource().sendFeedback(() -> Text.literal("No maps found!" ), false);
             }
 
 
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find folder!"), false);
+            throw new SimpleCommandExceptionType(Text.of("Could not find folder!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not find folder!"), false);
         }
     }
 
 
 
-    public static void setBoundaries(CommandContext<ServerCommandSource> ctx){
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void setBoundaries(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
 
         BlockPos corner1 = BlockPosArgumentType.getBlockPos(ctx, "corner1");
         BlockPos corner2 = BlockPosArgumentType.getBlockPos(ctx, "corner2");
 
-        Optional<Game> optionalGame = Game.getGame(name);
+        map.getBoundaries().setBoundaries(corner1,corner2);
+        boolean result = GenConfig.makeMapConfig(game, map);
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        if(!result) {
+            throw new SimpleCommandExceptionType(Text.of("Failed to set boundaries!")).create();
         }
 
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(optionalGameMap.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        optionalGameMap.get().getBoundaries().setBoundaries(corner1,corner2);
-        GenConfig.makeMapConfig(optionalGame.get(), optionalGameMap.get());
-
-        ctx.getSource().sendFeedback(() -> Text.literal("successfully set boundaries"), false);
+        ctx.getSource().sendFeedback(() -> Text.literal("successfully set boundaries!"), false);
     }
 
-    public static void getBoundaries(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void getBoundaries(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        //Game game = util.getGame(ctx);
+        GameMap map = getMap(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(optionalGameMap.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        if(!optionalGameMap.get().getBoundaries().isUsed()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("No Dimensions set!"), false);
-            return;
-        }
-
-        Boundary boundary = optionalGameMap.get().getBoundaries();
+        Boundary boundary = map.getBoundaries();
 
         ctx.getSource().sendFeedback(() -> Text.literal("corner 1 = " + boundary.getCorner1() + ", corner 2 = " + boundary.getCorner2()), false);
     }
 
-    public static void setBoundaryPosition( CommandContext<ServerCommandSource> ctx ){
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void setBoundaryPosition( CommandContext<ServerCommandSource> ctx ) throws CommandSyntaxException {
 
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
         BlockPos corner1 = BlockPosArgumentType.getBlockPos(ctx, "corner1");
 
-        Optional<Game> optionalGame = Game.getGame(name);
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        Boolean result = map.setBoundaryPosition(corner1, ctx.getSource().getServer());
+
+        if(!result){
+            throw new SimpleCommandExceptionType(Text.of("Failed to set boundaries!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("failed to update boundaries!"), false);
         }
-
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(optionalGameMap.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        Boolean result = optionalGameMap.get().setBoundaryPosition(corner1, ctx.getSource().getServer());
-
-        if(result == false ){
-            ctx.getSource().sendFeedback(() -> Text.literal("failed to update boundaries!"), false);
-        }
-        GenConfig.makeMapConfig(optionalGame.get(), optionalGameMap.get());
+        GenConfig.makeMapConfig(game, map);
 
         ctx.getSource().sendFeedback(() -> Text.literal("successfully set boundary position"), false);
     }
@@ -222,321 +167,195 @@ public class MapCommand {
 
 
 
-    public static void setTeamPosition(CommandContext<ServerCommandSource> ctx) {
+    public static void setTeamPosition(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
+
         int team = IntegerArgumentType.getInteger(ctx, "team");
         BlockPos position = BlockPosArgumentType.getBlockPos(ctx, "position");
 
 
-
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(!optionalGame.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        if(team < 0 || team > map.getTeams()-1) {
+            throw new SimpleCommandExceptionType(Text.of("Invalid team!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
+            //return;
         }
 
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(!optionalGameMap.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        if(team < 0 || team > optionalGameMap.get().getTeams()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
-            return;
-        }
-
-        optionalGameMap.get().setSpawnPoint(team, new SpawnPoint(position, Math.round(ctx.getSource().getPlayer().getYaw()/45)*45));
+        map.setSpawnPoint(team, new SpawnPoint(position, Math.round(ctx.getSource().getPlayer().getYaw()/45)*45));
 
 
-        GenConfig.makeMapConfig(optionalGame.get(), optionalGameMap.get());
+        GenConfig.makeMapConfig(game, map);
         ctx.getSource().sendFeedback(() -> Text.literal("saved team position"), false);
     }
 
-    public static void setTeamPositionWithYaw(CommandContext<ServerCommandSource> ctx) {
+    public static void setTeamPositionWithYaw(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
+
         int team = IntegerArgumentType.getInteger(ctx, "team");
         BlockPos position = BlockPosArgumentType.getBlockPos(ctx, "position");
         int yaw = IntegerArgumentType.getInteger(ctx, "yaw");
 
 
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(!optionalGame.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        if(team < 0 || team > map.getTeams()-1) {
+            throw new SimpleCommandExceptionType(Text.of("Invalid team!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
+            //return;
         }
 
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(!optionalGameMap.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        if(team < 0 || team > optionalGameMap.get().getTeams()-1) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
-            return;
-        }
-
-        optionalGameMap.get().setSpawnPoint(team, new SpawnPoint(position, yaw));
+        map.setSpawnPoint(team, new SpawnPoint(position, yaw));
 
 
-        GenConfig.makeMapConfig(optionalGame.get(), optionalGameMap.get());
+        GenConfig.makeMapConfig(game, map);
         ctx.getSource().sendFeedback(() -> Text.literal("saved team position"), false);
     }
 
-    public static void getTeamPosition(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void getTeamPosition(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        GameMap map = getMap(ctx);
+        //String name = StringArgumentType.getString(ctx, "gameName");
+        //String mapName = StringArgumentType.getString(ctx, "mapName");
         int team = IntegerArgumentType.getInteger(ctx, "team");
 
-
-
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(!optionalGame.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+        if(team < 0 || team > map.getTeams()-1) {
+            throw new SimpleCommandExceptionType(Text.of("Invalid team!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
+            //return;
         }
 
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(!optionalGameMap.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        if(team < 0 || team > optionalGameMap.get().getTeams()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Invalid team!"), false);
-            return;
-        }
-
-        if(optionalGameMap.get().getSpawnPoint(team) == null) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Team position not set!"), false);
-            return;
+        if(map.getSpawnPoint(team) == null) {
+            throw new SimpleCommandExceptionType(Text.of("Team position not set!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Team position not set!"), false);
+            //return;
         }
 
 
-        ctx.getSource().sendFeedback(() -> Text.literal("team " + team + "at: " + optionalGameMap.get().getSpawnPoint(team)), false);
+        ctx.getSource().sendFeedback(() -> Text.literal("team " + team + "at: " + map.getSpawnPoint(team)), false);
     }
 
-    public static void save(CommandContext<ServerCommandSource> ctx) {
+    public static void save(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+        GameMap map = getMap(ctx);
 
-
-
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(!optionalGame.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(!optionalGameMap.isPresent()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
 
         if (ctx.getSource().getWorld().getRegistryKey() != MiniGameDimension.EMG_DIMENSION_KEY) {
+            throw new SimpleCommandExceptionType(Text.of("You're not in the dimension!")).create();
 
-            ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
-            return;
+            //ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
+            //return;
         }
 
+        /*
 
-        if (!optionalGameMap.get().getBoundaries().isUsed()){
+
+        if (!map.getBoundaries().isUsed()){
+            throw new
             ctx.getSource().sendFeedback(() -> Text.literal("No boundaries set!"), false);
             return;
-        }
+        }*/
 
-        optionalGameMap.get().save(ctx.getSource().getServer());
+        map.save(ctx.getSource().getServer());
         ctx.getSource().sendFeedback(() -> Text.literal("saved map!"), false);
 
     }
 
-    public static void load(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void load(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<GameMap> optionalGameMap = GameMap.getMap(optionalGame.get(), mapName);
-
-        if(optionalGameMap.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
+        GameMap map = getMap(ctx);
 
         if (ctx.getSource().getWorld().getRegistryKey() != MiniGameDimension.EMG_DIMENSION_KEY) {
+            throw new SimpleCommandExceptionType(Text.of("You're not in the dimension!")).create();
 
-            ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
-            return;
+            //ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
+            //return;
         }
+        /*
 
         if (!optionalGameMap.get().getBoundaries().isUsed()){
             ctx.getSource().sendFeedback(() -> Text.literal("No boundaries set!"), false);
             return;
-        }
+        }*/
 
-        optionalGameMap.get().load(ctx.getSource().getServer());
+        map.load(ctx.getSource().getServer());
         ctx.getSource().sendFeedback(() -> Text.literal("loaded map!"), false);
 
     }
 
-    public static void addChestPos(CommandContext<ServerCommandSource> ctx) {
-
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void addChestPos(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
         BlockPos pos = BlockPosArgumentType.getBlockPos(ctx, "position");
-        Optional<RegistryKey<LootTable>> optionalTable;
-        try{
-            optionalTable = RegistryEntryArgumentType.getLootTable(ctx, "loot").getKey();
+        Optional<RegistryKey<LootTable>> optionalTable = RegistryEntryArgumentType.getLootTable(ctx, "loot").getKey();
 
-            Optional<Game> game = Game.getGame(name);
 
-            if(game.isEmpty()){
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-                return;
-            }
-
-            Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
-
-            if(map.isEmpty()){
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-                return;
-            }
-
-            if(optionalTable.isEmpty()) {
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find loot table!"), false);
-                return;
-            }
-
-            boolean result = map.get().addChestPos(pos, optionalTable.get());
-
-            if(result == false) {
-                ctx.getSource().sendFeedback(() -> Text.literal("Already exists, over-writing!"), false);
-                return;
-            }
-
-            GenConfig.makeMapConfig(game.get(), map.get());
-
-            ctx.getSource().sendFeedback(() -> Text.literal("Successfully added chest position!"), false);
-
-        } catch (Exception e) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Error! could not get loot table " + e), false);
+        if(optionalTable.isEmpty()) {
+            throw new SimpleCommandExceptionType(Text.of("Could not find loot table!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not find loot table!"), false);
+            //return;
         }
 
-
-
-    }
-
-    public static void addAllChests(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
-
-        try{
-            Optional<RegistryKey<LootTable>> optionalTable = RegistryEntryArgumentType.getLootTable(ctx, "loot").getKey();
-
-            Optional<Game> game = Game.getGame(name);
-
-            if(game.isEmpty()){
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-                return;
-            }
-
-            Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
-
-            if(map.isEmpty()){
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-                return;
-            }
-
-            if(optionalTable.isEmpty()) {
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find loot table!"), false);
-                return;
-            }
-
-            int result = map.get().addAllChests(ctx.getSource().getServer(), optionalTable.get());
-
-            GenConfig.makeMapConfig(game.get(), map.get());
-
-            ctx.getSource().sendFeedback(() -> Text.literal(String.format("added %d chest positions", result)), false);
-        } catch (Exception e ) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Error! could not get loot table " + e), false);
-        }
-
-
-
-    }
-
-    public static void removeChestPos(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
-        BlockPos pos = BlockPosArgumentType.getBlockPos(ctx, "position");
-
-        Optional<Game> game = Game.getGame(name);
-
-        if(game.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
-
-        if(map.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
-        }
-
-        boolean result = map.get().delChestPos(pos);
+        boolean result = map.addChestPos(pos, optionalTable.get());
 
         if(result == false) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find position!"), false);
-        } else {
-            GenConfig.makeMapConfig(game.get(), map.get());
-            ctx.getSource().sendFeedback(() -> Text.literal("Successfully deleted position!"), false);
+            ctx.getSource().sendFeedback(() -> Text.literal("Already exists, over-writing!"), false);
+            return;
         }
+
+        GenConfig.makeMapConfig(game, map);
+
+        ctx.getSource().sendFeedback(() -> Text.literal("Successfully added chest position!"), false);
+
+
+
     }
 
-    public static void listChestPos(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    public static void addAllChests(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        Optional<Game> game = Game.getGame(name);
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
+        Optional<RegistryKey<LootTable>> optionalTable = RegistryEntryArgumentType.getLootTable(ctx, "loot").getKey();
 
-        if(game.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
+
+        if(optionalTable.isEmpty()) {
+            throw new SimpleCommandExceptionType(Text.of("Could not find loot table!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not find loot table!"), false);
+            //return;
         }
 
-        Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
+        int result = map.addAllChests(ctx.getSource().getServer(), optionalTable.get());
 
-        if(map.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find map!"), false);
-            return;
+        GenConfig.makeMapConfig(game, map);
+
+        ctx.getSource().sendFeedback(() -> Text.literal(String.format("added %d chest positions", result)), false);
+
+    }
+
+    public static void removeChestPos(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        //String name = StringArgumentType.getString(ctx, "gameName");
+        //String mapName = StringArgumentType.getString(ctx, "mapName");
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
+        BlockPos pos = BlockPosArgumentType.getBlockPos(ctx, "position");
+
+        boolean result = map.delChestPos(pos);
+
+        if(result == false) {
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not find position!"), false);
+            throw new SimpleCommandExceptionType(Text.of("Could not find position!")).create();
         }
 
+        GenConfig.makeMapConfig(game, map);
+        ctx.getSource().sendFeedback(() -> Text.literal("Successfully deleted position!"), false);
 
+    }
+
+    public static void listChestPos(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        GameMap map = getMap(ctx);
 
         //Optional<ArrayList<GameMap>> optionalGameMaps = GetConfig.getMaps(game.get());
-        List<LootChest> chests = map.get().listChestPos();
+        List<LootChest> chests = map.listChestPos();
 
 
         if (!chests.isEmpty()){
@@ -545,6 +364,7 @@ public class MapCommand {
                 ctx.getSource().sendFeedback(() -> Text.literal("chest at " + chest.pos() + " with loot " + chest.lootTable().getPath()), false);
             }
         } else {
+
             ctx.getSource().sendFeedback(() -> Text.literal("No chests found!" ), false);
         }
 

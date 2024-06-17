@@ -4,6 +4,8 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import fbanna.easyminigame.config.GenConfig;
 import fbanna.easyminigame.config.GetConfig;
 import fbanna.easyminigame.game.Game;
@@ -19,17 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static fbanna.easyminigame.command.CommandUtil.getGame;
+
 public class GameCommand {
 
-    public static void create(CommandContext<ServerCommandSource> ctx) {
+    public static void create(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
         String name = StringArgumentType.getString(ctx, "gameName");
         int playerCount = IntegerArgumentType.getInteger(ctx, "playerCount");
 
         Optional<Game> findGames = Game.getGame(name);
         if(findGames.isPresent()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Game already existed!"), false);
-            return;
+            throw new SimpleCommandExceptionType(Text.literal("Game already existed!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Game already existed!"), false);
+            //return;
         }
 
         Game game = new Game(name, playerCount);
@@ -40,38 +45,34 @@ public class GameCommand {
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully created game!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not create game!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not create game!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not create game!"), false);
         }
 
 
     }
 
-    public static void delete(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void delete(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
+        Optional<Boolean> result = game.delete();
 
-        Optional<Game> game = Game.getGame(name);
-
-        if(game.isPresent()) {
-
-            Optional<Boolean> result = game.get().delete();
-
-            if(result.isPresent()) {
-                if (result.get()) {
-                    ctx.getSource().sendFeedback(() -> Text.literal("Successfully deleted game!"), false);
-                } else {
-                    ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-                }
+        if(result.isPresent()) {
+            if (result.get()) {
+                ctx.getSource().sendFeedback(() -> Text.literal("Successfully deleted game!"), false);
             } else {
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not delete game!"), false);
+                throw new SimpleCommandExceptionType(Text.literal("Could not find game!")).create();
+                //ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
             }
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not delete game!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not delete game!"), false);
         }
+
 
     }
 
-    public static void list(CommandContext<ServerCommandSource> ctx) {
+    public static void list(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
         Optional<ArrayList<Game>> optionalGames = GetConfig.getGames();
 
@@ -83,223 +84,160 @@ public class GameCommand {
                     ctx.getSource().sendFeedback(() -> Text.literal(game.getName()), false);
                 }
             } else {
-                ctx.getSource().sendFeedback(() -> Text.literal("No games found!" ), false);
+                throw new SimpleCommandExceptionType(Text.literal("No games found!")).create();
             }
 
 
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find folder!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not find folder!")).create();
+
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not find folder!"), false);
         }
 
     }
 
-    public static void getGameMode(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void getGameMode(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        GameMode gameMode = optionalGame.get().getGameMode();
+        GameMode gameMode = game.getGameMode();
 
         ctx.getSource().sendFeedback(() -> Text.literal("gamemode is " + gameMode.toString()), false);
     }
 
-    public static void setGameMode(CommandContext<ServerCommandSource> ctx) {
-        try {
-            String name = StringArgumentType.getString(ctx, "gameName");
+    public static void setGameMode(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-            Optional<Game> optionalGame = Game.getGame(name);
+        GameMode gameMode = GameModeArgumentType.getGameMode(ctx, "gamemode");
 
-            if(optionalGame.isEmpty()){
-                ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-                return;
-            }
+        game.setGameMode(gameMode);
 
-            GameMode gameMode = GameModeArgumentType.getGameMode(ctx, "gamemode");
+        boolean result = GenConfig.makeGameConfig(game);
 
-            optionalGame.get().setGameMode(gameMode);
-
-            GenConfig.makeGameConfig(optionalGame.get());
-
-            ctx.getSource().sendFeedback(() -> Text.literal("set game mode!"), false);
-
-
-        } catch (Exception e) {
-            ctx.getSource().sendFeedback(() -> Text.literal("invalid gamemode"), false);
+        if(!result) {
+            throw new SimpleCommandExceptionType(Text.literal("Could not save game mode!")).create();
         }
+
+        ctx.getSource().sendFeedback(() -> Text.literal("set game mode!"), false);
 
     }
 
-    public static void setReload(CommandContext<ServerCommandSource> ctx) {
+    public static void setReload(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
 
-        String name = StringArgumentType.getString(ctx, "gameName");
+        Game game = getGame(ctx);
         boolean reload = BoolArgumentType.getBool(ctx, "boolean");
 
-        Optional<Game> optionalGame = Game.getGame(name);
+        game.setReload(reload);
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        optionalGame.get().setReload(reload);
-
-        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+        boolean result = GenConfig.makeGameConfig(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully set reload!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not save reload!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not save reload!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not save reload!"), false);
         }
 
 
     }
-    public static void getReload(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void getReload(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        ctx.getSource().sendFeedback(() -> Text.literal("reload is set to " + optionalGame.get().getReload()), false);
-
-
+        ctx.getSource().sendFeedback(() -> Text.literal("reload is set to " + game.getReload()), false);
     }
 
-    public static void setLives(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void setLives(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
         int lives = IntegerArgumentType.getInteger(ctx, "lives");
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
 
         if(lives <= 0) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Enter valid lives!"), false);
-            return;
+
+            throw new SimpleCommandExceptionType(Text.literal("Enter valid lives!")).create();
         }
 
-        optionalGame.get().setLives(lives);
+        game.setLives(lives);
 
-        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+        boolean result = GenConfig.makeGameConfig(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully set lives!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not save lives!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not save lives!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not save lives!"), false);
         }
     }
 
-    public static void getLives(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void getLives(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        ctx.getSource().sendFeedback(() -> Text.literal("players have " + optionalGame.get().getLives() + " lives"), false);
+        ctx.getSource().sendFeedback(() -> Text.literal("players have " + game.getLives() + " lives"), false);
     }
 
-    public static void addChestReGen(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void addChestReGen(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
         int ticks = IntegerArgumentType.getInteger(ctx, "ticks");
 
-        Optional<Game> optionalGame = Game.getGame(name);
+        game.addChestReGen(ticks);
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        optionalGame.get().addChestReGen(ticks);
-
-        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+        boolean result = GenConfig.makeGameConfig(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not save re-gen!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
         }
     }
 
-    public static void removeChestReGen(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void removeChestReGen(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+
+        Game game = getGame(ctx);
         int index = IntegerArgumentType.getInteger(ctx, "index");
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        List<Integer> ticks = optionalGame.get().getChestReGen();
+        List<Integer> ticks = game.getChestReGen();
 
         if(index < 0 || index > ticks.size()-1) {
-            ctx.getSource().sendFeedback(() -> Text.literal("Invalid index!"), false);
-            return;
+            throw new SimpleCommandExceptionType(Text.literal("Invalid index!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Invalid index!"), false);
+            //return;
         }
 
-        optionalGame.get().removeChestReGen(index);
+        game.removeChestReGen(index);
 
-        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+        boolean result = GenConfig.makeGameConfig(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not save re-gen!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
         }
     }
 
-    public static void clearChestReGens(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void clearChestReGens(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
+        game.clearChestReGen();
 
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        optionalGame.get().clearChestReGen();
-
-        boolean result = GenConfig.makeGameConfig(optionalGame.get());
+        boolean result = GenConfig.makeGameConfig(game);
 
         if(result) {
             ctx.getSource().sendFeedback(() -> Text.literal("Successfully set re-gen!"), false);
         } else {
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
+            throw new SimpleCommandExceptionType(Text.literal("Could not save re-gen!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("Could not save re-gen!"), false);
         }
     }
 
-    public static void listChestReGen(CommandContext<ServerCommandSource> ctx) {
-        String name = StringArgumentType.getString(ctx, "gameName");
+    public static void listChestReGen(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        Game game = getGame(ctx);
 
-        Optional<Game> optionalGame = Game.getGame(name);
-
-        if(optionalGame.isEmpty()){
-            ctx.getSource().sendFeedback(() -> Text.literal("Could not find game!"), false);
-            return;
-        }
-
-        List<Integer> ticks = optionalGame.get().getChestReGen();
+        List<Integer> ticks = game.getChestReGen();
 
         if(ticks.isEmpty()) {
-            ctx.getSource().sendFeedback(() -> Text.literal("No re-gens found!"), false);
-            return;
+            throw new SimpleCommandExceptionType(Text.literal("No re-gens found!")).create();
+            //ctx.getSource().sendFeedback(() -> Text.literal("No re-gens found!"), false);
+            //return;
         }
 
         ctx.getSource().sendFeedback(() -> Text.literal("Found " + ticks.size() + " re-gens!"), false);
