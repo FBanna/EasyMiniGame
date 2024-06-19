@@ -376,14 +376,13 @@ public class GameManager {
                             if(this.lives.get(i).get(j) <= 0) {
 
                                 int winning = teamAlive();
-                                EasyMiniGame.LOGGER.info("winning team is " + winning);
 
                                 if(winning != -1) {
-                                    messagePlayers(Text.of("Team " + winning + " wins").copy().formatted(Formatting.AQUA), false);
-                                    stop();
+                                    this.messagePlayers(Text.of("Team " + winning + " wins").copy().formatted(Formatting.AQUA), false);
+                                    this.stop();
 
                                     //code here for party game set up
-                                    return false;
+                                    return true;
                                 }
 
                                 return true;
