@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "fbanna.easyminigame.mixin",
   "compatibilityLevel": "JAVA_17",
-  "server": ["MixinDeath"],
+  "server": ["MixinDeath", "MixinSpectatorTeleport", "MixinTick"],
   "injectors": {
     "defaultRequire": 1
   }

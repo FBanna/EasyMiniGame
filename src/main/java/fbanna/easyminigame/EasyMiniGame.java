@@ -15,10 +15,13 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+
+import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 
 public class EasyMiniGame implements ModInitializer {
 	// This logger is used to write text to the console and the log file.
@@ -49,6 +52,7 @@ public class EasyMiniGame implements ModInitializer {
 			MANAGER = new GameManager(server);
 			MANAGER.stop();
 		});
+
 
 
 		ServerTickEvents.END_SERVER_TICK.register((MinecraftServer server) -> {
