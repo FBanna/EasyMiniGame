@@ -378,11 +378,30 @@ public class GameManager {
                                 int winning = teamAlive();
 
                                 if(winning != -1) {
-                                    this.messagePlayers(Text.of("Team " + winning + " wins").copy().formatted(Formatting.AQUA), false);
+
+                                    String winningPlayers = "";
+
+                                    int k = 0;
+
+                                    for(UUID player: this.teams.get(winning)) {
+                                        Optional<ServerPlayerEntity> optionalPlayer = UUIDtoPlayer(player);
+
+                                        if(optionalPlayer.isPresent()) {
+                                            if(k == this.teams.size()-1) {
+                                                winningPlayers = "%s %s".formatted(winningPlayers,optionalPlayer.get().getName().toString());
+                                            } else {
+                                                winningPlayers = "%s %s,".formatted(winningPlayers, optionalPlayer.get().getName().toString());
+                                            }
+                                        }
+
+                                    }
+
+
+                                    this.messagePlayers( Text.of("Team %s wins, %s".formatted(winning, winningPlayers) ).copy().formatted(Formatting.AQUA), false);
                                     this.stop();
 
                                     //code here for party game set up
-                                    return true;
+                                    return false;
                                 }
 
                                 return true;
