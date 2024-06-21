@@ -373,11 +373,16 @@ public class MapCommand {
     }
 
     public static void clearChests(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        GameMap map = getMap(ctx);
+        Game game = getGame(ctx);
+        GameMap map = getMap(ctx, game);
 
         map.clearChestPos();
 
+        GenConfig.makeMapConfig(game, map);
+
         ctx.getSource().sendFeedback(() -> Text.literal("Cleared all chest positions!"), false);
+
+
     }
 
 }
