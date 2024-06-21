@@ -253,6 +253,11 @@ public class EasyMiniGameCommand {
                                                                 .executes(ctx -> {
                                                                     MapCommand.listChestPos(ctx);
                                                                     return 1;
+                                                                }))
+                                                        .then(CommandManager.literal("clear")
+                                                                .executes(ctx -> {
+                                                                    MapCommand.clearChests(ctx);
+                                                                    return 1;
                                                                 })))
                                                 .then(CommandManager.literal("spawnPoint")
                                                         .then(CommandManager.literal("set")

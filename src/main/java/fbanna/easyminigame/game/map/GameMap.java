@@ -393,4 +393,8 @@ public class GameMap {
         return new ArrayList<>(this.chestPos);
     }
 
+    public void clearChestPos() {
+        this.chestPos = new ArrayList<>();
+    }
+
 }
