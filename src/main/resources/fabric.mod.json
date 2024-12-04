@@ -1,27 +1,30 @@
 {
 	"schemaVersion": 1,
-	"id": "chestprotection",
+	"id": "easyminigame",
 	"version": "${version}",
-	"name": "Chest Protection",
-	"description": "Lock your chests!",
+	"name": "EasyMiniGame",
+	"description": "Make mini games easily!",
 	"authors": [
 		"FBanna"
 	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
 	"license": "CC0-1.0",
-	"environment": "*",
+	"environment": "server",
 	"entrypoints": {
 		"main": [
-			"fbanna.chestprotection.ChestProtection"
+			"fbanna.easyminigame.EasyMiniGame"
 		]
 	},
 	"depends": {
 		"fabricloader": ">=0.16.9",
-		"minecraft": "~1.21.4",
+		"minecraft": "~1.21.3",
 		"java": ">=21",
 		"fabric-api": "*"
 	},
 	"mixins": [
-		"chestprotection.mixin.json"
+		"easyminigame.mixin.json"
 	]
-
 }
