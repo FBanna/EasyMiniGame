@@ -48,7 +48,7 @@ public class EasyMiniGame implements ModInitializer {
 		CommandRegistrationCallback.EVENT.register(EasyMiniGameCommand::register);
 
 		ServerLifecycleEvents.SERVER_STARTED.register((MinecraftServer server) -> {
-			//LOGGER.info("generated");
+			LOGGER.info("generated");
 			MANAGER = new GameManager(server);
 			MANAGER.stop();
 		});
