@@ -17,57 +17,62 @@ import java.util.Optional;
 
 public class CommandUtil {
 
-    public static Game getGame(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        String name = StringArgumentType.getString(ctx, "gameName");
+  public static Game getGame(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    String name = StringArgumentType.getString(ctx, "gameName");
 
+    Optional<Game> game = Game.getGame(name);
 
-        Optional<Game> game = Game.getGame(name);
+    if (game.isPresent()) {
+      return game.get();
+    } else {
+      throw new SimpleCommandExceptionType(Text.of("Could not find game!")).create();
+    }
+  }
 
-        if(game.isPresent()) {
-            return game.get();
-        } else {
-            throw new SimpleCommandExceptionType(Text.of("Could not find game!")).create();
-        }
+  public static GameMap getMap(CommandContext<ServerCommandSource> ctx, Game game) throws CommandSyntaxException {
+    String mapName = StringArgumentType.getString(ctx, "mapName");
+
+    Optional<GameMap> map = GameMap.getMap(game, mapName);
+
+    if (map.isEmpty()) {
+      throw new SimpleCommandExceptionType(Text.of("Could not find map!")).create();
+      // throw new RuntimeException("Could not find map!", new
+      // SimpleCommandExceptionType(new LiteralMessage("Could not find
+      // map!")).create());
+      // throw (;
+      // throw new RuntimeException(new Throwable("Could not find map!"));
+      // throw new RuntimeException("Could not find map!");
     }
 
-    public static GameMap getMap(CommandContext<ServerCommandSource> ctx, Game game) throws CommandSyntaxException {
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    return map.get();
+  }
 
-        Optional<GameMap> map = GameMap.getMap(game, mapName);
+  public static GameMap getMap(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    String name = StringArgumentType.getString(ctx, "gameName");
+    String mapName = StringArgumentType.getString(ctx, "mapName");
 
-        if(map.isEmpty()){
-            throw new SimpleCommandExceptionType(Text.of("Could not find map!")).create();
-            //throw new RuntimeException("Could not find map!", new SimpleCommandExceptionType(new LiteralMessage("Could not find map!")).create());
-            //throw (;
-            //throw new RuntimeException(new Throwable("Could not find map!"));
-            //throw new RuntimeException("Could not find map!");
-        }
+    Optional<Game> game = Game.getGame(name);
 
-        return map.get();
+    if (game.isEmpty()) {
+      throw new RuntimeException("Could not find game!");
     }
 
-    public static GameMap getMap(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        String name = StringArgumentType.getString(ctx, "gameName");
-        String mapName = StringArgumentType.getString(ctx, "mapName");
+    Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
 
-        Optional<Game> game = Game.getGame(name);
+    if (map.isEmpty()) {
+      // throw new ArrayIndexOutOfBoundsException();
 
-        if(game.isEmpty()){
-            throw new RuntimeException("Could not find game!");
-        }
-
-        Optional<GameMap> map = GameMap.getMap(game.get(), mapName);
-
-        if(map.isEmpty()){
-            //throw new ArrayIndexOutOfBoundsException();
-
-            //throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().create("Could not find map!");
-            throw new SimpleCommandExceptionType(Text.of("Could not find map!")).create();
-            //throw new RuntimeException("Could not find map!", new SimpleCommandExceptionType(new LiteralMessage("Could not find map!")).create());
-            //throw new RuntimeException(new Throwable("Could not find map!"));
-            //throw new RuntimeException("Could not find map!");
-        }
-
-        return map.get();
+      // throw
+      // CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().create("Could
+      // not find map!");
+      throw new SimpleCommandExceptionType(Text.of("Could not find map!")).create();
+      // throw new RuntimeException("Could not find map!", new
+      // SimpleCommandExceptionType(new LiteralMessage("Could not find
+      // map!")).create());
+      // throw new RuntimeException(new Throwable("Could not find map!"));
+      // throw new RuntimeException("Could not find map!");
     }
+
+    return map.get();
+  }
 }

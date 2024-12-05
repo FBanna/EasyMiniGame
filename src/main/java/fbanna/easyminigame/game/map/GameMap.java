@@ -16,8 +16,8 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.server.loottable.LootTableProvider;
-import net.minecraft.data.server.tag.ItemTagProvider;
+//import net.minecraft.data.server.loottable.LootTableProvider;
+//import net.minecraft.data.server.tag.ItemTagProvider;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -52,349 +52,346 @@ import static net.minecraft.block.entity.StructureBlockBlockEntity.createRandom;
 
 public class GameMap {
 
-    private final String name;
-    private final int teams;
-    private final Boundary boundary = new Boundary();
-    //private BlockPos[] spawnPoints;
-    private SpawnPoint[] spawnPoints;
+  private final String name;
+  private final int teams;
+  private final Boundary boundary = new Boundary();
+  // private BlockPos[] spawnPoints;
+  private SpawnPoint[] spawnPoints;
 
-    private List<LootChest> chestPos = new ArrayList<>();
+  private List<LootChest> chestPos = new ArrayList<>();
 
-    public static final Codec<GameMap> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.fieldOf("name").forGetter(GameMap::getName),
-            Codec.INT.fieldOf("teams").forGetter(GameMap::getTeams),
-            Boundary.CODEC.fieldOf("boundaries").forGetter(GameMap::getBoundaries),
-            //BlockPos.CODEC.listOf().fieldOf("spawnPoints").forGetter(GameMap::getSpawnPoints),
-            SpawnPoint.CODEC.listOf().fieldOf("spawnPoints").forGetter(GameMap::getSpawnPoints),
-            LootChest.CODEC.listOf().fieldOf("lootChest").forGetter(GameMap::listChestPos)
-    ).apply(instance, GameMap::new));
+  public static final Codec<GameMap> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+      Codec.STRING.fieldOf("name").forGetter(GameMap::getName),
+      Codec.INT.fieldOf("teams").forGetter(GameMap::getTeams),
+      Boundary.CODEC.fieldOf("boundaries").forGetter(GameMap::getBoundaries),
+      // BlockPos.CODEC.listOf().fieldOf("spawnPoints").forGetter(GameMap::getSpawnPoints),
+      SpawnPoint.CODEC.listOf().fieldOf("spawnPoints").forGetter(GameMap::getSpawnPoints),
+      LootChest.CODEC.listOf().fieldOf("lootChest").forGetter(GameMap::listChestPos)).apply(instance, GameMap::new));
 
-    public GameMap(String name, int teams) {
-        this.name = name;
-        this.teams = teams;
-        this.spawnPoints = new SpawnPoint[teams];
-        Arrays.fill(this.spawnPoints, new SpawnPoint(new BlockPos(0,0,0), 0));
+  public GameMap(String name, int teams) {
+    this.name = name;
+    this.teams = teams;
+    this.spawnPoints = new SpawnPoint[teams];
+    Arrays.fill(this.spawnPoints, new SpawnPoint(new BlockPos(0, 0, 0), 0));
+  }
+
+  public GameMap(String name, int teams, Boundary boundary, List<SpawnPoint> spawnPoints, List<LootChest> chestPos) {
+    this.name = name;
+    this.teams = teams;
+    this.boundary.setBoundaries(boundary);
+    this.spawnPoints = spawnPoints.toArray(new SpawnPoint[teams]);
+    this.chestPos = new ArrayList<>(chestPos);
+  }
+
+  public SpawnPoint getSpawnPoint(int team) {
+    return this.spawnPoints[team];
+  }
+
+  public List<SpawnPoint> getSpawnPoints() {
+    return Arrays.stream(this.spawnPoints).toList();
+  }
+
+  public void setSpawnPoint(int team, SpawnPoint position) {
+    try {
+      this.spawnPoints[team] = position;
+    } catch (Exception e) {
+      EasyMiniGame.LOGGER.info("errr" + e);
     }
 
-    public GameMap(String name, int teams, Boundary boundary, List<SpawnPoint> spawnPoints, List<LootChest> chestPos) {
-        this.name = name;
-        this.teams = teams;
-        this.boundary.setBoundaries(boundary);
-        this.spawnPoints = spawnPoints.toArray(new SpawnPoint[teams]);
-        this.chestPos = new ArrayList<>(chestPos);
-    }
-    public SpawnPoint getSpawnPoint(int team) {
-        return this.spawnPoints[team];
+  }
+
+  public Boundary getBoundaries() {
+    return this.boundary;
+  }
+
+  public Boolean setBoundaryPosition(BlockPos corner1, MinecraftServer server) {
+
+    Optional<Vec3i> dimensions = getTemplateDimensions(server);
+    if (dimensions.isPresent()) {
+      this.boundary.setBoundaries(corner1, corner1.add(dimensions.get()));
+      return true;
+    } else {
+      return false;
     }
 
-    public List<SpawnPoint> getSpawnPoints() {
-        return Arrays.stream(this.spawnPoints).toList();
+  }
+
+  public String getName() {
+    return this.name;
+  }
+
+  public Vec3i getDimensions() {
+    return this.boundary.getDimensions();
+  }
+
+  public int getTeams() {
+    return this.teams;
+  }
+
+  public static Optional<GameMap> getMap(Game game, String name) {
+    Optional<ArrayList<GameMap>> maps = GetConfig.getMaps(game);
+
+    if (maps.isPresent()) {
+      for (GameMap map : maps.get()) {
+        if (Objects.equals(map.getName(), name)) {
+          return Optional.of(map);
+        }
+      }
     }
 
-    public void setSpawnPoint(int team, SpawnPoint position) {
-        try{
-            this.spawnPoints[team] = position;
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info("errr" + e);
+    return Optional.empty();
+  }
+
+  public boolean create(Game game) {
+
+    return GenConfig.makeMap(game, this);
+
+  }
+
+  public Optional<Boolean> delete(Game game) {
+    return DelConfig.deleteMap(game, this);
+  }
+
+  public ServerWorld getWorld(MinecraftServer server) {
+    return server.getWorld(EMG_DIMENSION_KEY);
+  }
+
+  public Optional<Vec3i> getTemplateDimensions(MinecraftServer server) {
+    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+
+    // Optional<StructureTemplate> template = manager.getTemplate(new
+    // Identifier(this.getName()));
+    Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
+
+    if (template.isPresent()) {
+      return Optional.ofNullable(template.get().getSize());
+    }
+    return Optional.empty();
+  }
+
+  public void load(MinecraftServer server) {
+
+    // CLEAR ITEMS
+    /*
+     * try{
+     * for (Entity entity : getWorld(server).iterateEntities()) {
+     * try{
+     * if (entity != null && entity.getType().equals(EntityType.ITEM)) {
+     * EasyMiniGame.LOGGER.info("found item!");
+     * entity.kill();
+     * //entities.remove();
+     * 
+     * }
+     * } catch (Exception e) {
+     * EasyMiniGame.LOGGER.info("eroor killing " + e);
+     * }
+     * 
+     * }
+     * } catch (Exception e) {
+     * EasyMiniGame.LOGGER.info("eorr looping " + e);
+     * }
+     */
+
+    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+
+    // Optional<StructureTemplate> template = manager.getTemplate(new
+    // Identifier(this.getName()));
+    Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
+
+    BlockPos corner1 = getBoundaries().getCorner1();
+    BlockPos corner2 = getBoundaries().getCorner2();
+
+    BlockPos newcorner = BlockPos.min(corner1, corner2);
+
+    if (template.isPresent()) {
+      template.get().place(
+          getWorld(server),
+          newcorner,
+          newcorner,
+          new StructurePlacementData(),
+          createRandom(2),
+          2);
+    } else {
+      EasyMiniGame.LOGGER.info("not right");
+    }
+
+  }
+
+  public void clearChests(MinecraftServer server) {
+    for (LootChest chest : this.chestPos) {
+      if (getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
+
+        ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+
+        if (chest.lootTable() != null && block != null) {
+          block.clear();
+          block.setLootTable(null);
+        } else {
+          EasyMiniGame.LOGGER.info("failed to clear");
         }
 
+      } else {
+        EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+      }
     }
+  }
 
-    public Boundary getBoundaries() {
-        return this.boundary;
-    }
+  public void genChests(MinecraftServer server) {
+    for (LootChest chest : this.chestPos) {
 
-    public Boolean setBoundaryPosition(BlockPos corner1, MinecraftServer server) {
+      if (getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
 
-        Optional<Vec3i> dimensions = getTemplateDimensions(server);
-        if(dimensions.isPresent()) {
-            this.boundary.setBoundaries(corner1, corner1.add(dimensions.get()));
-            return true;
+        ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+
+        if (chest.lootTable() != null && block != null) {
+          block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
         } else {
+          EasyMiniGame.LOGGER.info("invalid loot table or chest position");
+        }
+
+      } else {
+        EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+      }
+
+    }
+  }
+
+  public void killItems(MinecraftServer server) {
+    List<Entity> entities = new ArrayList<>();
+    Predicate<Entity> predicate = entity -> true;
+    getWorld(server).collectEntitiesByType(TypeFilter.instanceOf(ItemEntity.class), predicate, entities);
+
+    for (Entity entity : entities) {
+      entity.kill(getWorld(server));
+    }
+  }
+
+  public void resetMap(MinecraftServer server, boolean reset) {
+
+    killItems(server);
+
+    clearChests(server);
+
+    if (reset) {
+      this.load(server);
+    }
+
+    genChests(server);
+
+  }
+
+  public void save(MinecraftServer server) {
+
+    clearChests(server); // clear chests so no loot is saved
+
+    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+
+    // StructureTemplate template = manager.getTemplateOrBlank(new
+    // Identifier(this.getName()));
+    StructureTemplate template = manager.getTemplateOrBlank(Identifier.of(this.getName()));
+
+    BlockPos corner1 = getBoundaries().getCorner1();
+    BlockPos corner2 = getBoundaries().getCorner2();
+
+    BlockPos newcorner = BlockPos.min(corner1, corner2);
+
+    EasyMiniGame.LOGGER.info(String.valueOf(newcorner));
+
+    template.saveFromWorld(getWorld(server),
+        newcorner,
+        this.boundary.getDimensions(),
+        false,
+        Blocks.STRUCTURE_VOID);
+
+    template.setAuthor("easyminigame");
+
+    try {
+      // manager.saveTemplate(new Identifier(this.getName()));
+      manager.saveTemplate(Identifier.of(this.getName()));
+    } catch (Exception e) {
+      EasyMiniGame.LOGGER.info(String.valueOf(e));
+    }
+  }
+
+  public boolean addChestPos(BlockPos pos, RegistryKey<LootTable> lootTable) {
+
+    try {
+      if (!this.chestPos.isEmpty()) {
+        for (LootChest chest : this.chestPos) {
+          if (chest.pos().equals(pos)) {
+            this.chestPos.remove(chest);
             return false;
+          }
         }
-
+      }
+    } catch (Exception e) {
+      EasyMiniGame.LOGGER.info(String.valueOf(e));
     }
 
-    public String getName(){
-        return this.name;
-    }
+    this.chestPos.add(new LootChest(pos, lootTable.getValue()));
+    return true;
+  }
 
-    public Vec3i getDimensions() {
-        return this.boundary.getDimensions();
-    }
+  public int addAllChests(MinecraftServer sever, RegistryKey<LootTable> lootTable) {
+    try {
+      BlockPos corner1 = getBoundaries().getCorner1();
+      BlockPos corner2 = getBoundaries().getCorner2();
 
-    public int getTeams() {
-        return this.teams;
-    }
+      BlockPos newcorner = BlockPos.min(corner1, corner2);
+      Vec3i dimensions = getDimensions();
+      int i = 0;
 
-    public static Optional<GameMap> getMap(Game game, String name) {
-        Optional<ArrayList<GameMap>> maps = GetConfig.getMaps(game);
+      /*
+       * for(int x = 0; x < newcorner.getX(); x++) {
+       * for(int y = 0; y < newcorner.getY(); y++) {
+       * for(int z = 0; z < newcorner.getZ(); z++) {
+       * BlockEntity block = getWorld(sever).getBlockEntity(newcorner.add(new
+       * Vec3i(x,y,z)));
+       * if(block.getType().equals(BlockEntityType.CHEST)){
+       * i++;
+       * this.chestPos.add(new LootChest(newcorner.add(new Vec3i(x,y,z)),
+       * lootTable.getValue()));
+       * }
+       * }
+       * }
+       * }
+       */
 
-        if(maps.isPresent()){
-            for(GameMap map: maps.get()) {
-                if(Objects.equals(map.getName(), name)) {
-                    return Optional.of(map);
-                }
+      for (int x = 0; x < dimensions.getX(); x++) {
+        for (int y = 0; y < dimensions.getY(); y++) {
+          for (int z = 0; z < dimensions.getZ(); z++) {
+            BlockEntity block = getWorld(sever).getBlockEntity(newcorner.add(new Vec3i(x, y, z)));
+            if (block != null && block.getType().equals(BlockEntityType.CHEST)) {
+              i++;
+              this.chestPos.add(new LootChest(newcorner.add(new Vec3i(x, y, z)), lootTable.getValue()));
             }
+          }
         }
-
-        return Optional.empty();
+      }
+      return i;
+    } catch (Exception e) {
+      EasyMiniGame.LOGGER.info("erorr " + e);
     }
 
-    public boolean create(Game game) {
+    return 0;
+  }
 
-        return GenConfig.makeMap(game, this);
-
-    }
-
-    public Optional<Boolean> delete(Game game) {
-        return DelConfig.deleteMap(game, this);
-    }
-
-    public ServerWorld getWorld(MinecraftServer server) {
-        return server.getWorld(EMG_DIMENSION_KEY);
-    }
-
-    public Optional<Vec3i> getTemplateDimensions(MinecraftServer server) {
-        StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
-
-        //Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
-        Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
-
-        if(template.isPresent()) {
-            return Optional.ofNullable(template.get().getSize());
-        }
-        return Optional.empty();
-    }
-
-
-    public void load(MinecraftServer server) {
-
-        //CLEAR ITEMS
-        /*
-        try{
-            for (Entity entity : getWorld(server).iterateEntities()) {
-                try{
-                    if (entity != null && entity.getType().equals(EntityType.ITEM)) {
-                        EasyMiniGame.LOGGER.info("found item!");
-                        entity.kill();
-                        //entities.remove();
-
-                    }
-                } catch (Exception e) {
-                    EasyMiniGame.LOGGER.info("eroor killing " + e);
-                }
-
-            }
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info("eorr looping " + e);
-        }*/
-
-
-
-
-
-
-        StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
-
-        //Optional<StructureTemplate> template = manager.getTemplate(new Identifier(this.getName()));
-        Optional<StructureTemplate> template = manager.getTemplate(Identifier.of(this.getName()));
-
-        BlockPos corner1 = getBoundaries().getCorner1();
-        BlockPos corner2 = getBoundaries().getCorner2();
-
-        BlockPos newcorner = BlockPos.min(corner1,corner2);
-
-        if(template.isPresent()){
-            template.get().place(
-                    getWorld(server),
-                    newcorner,
-                    newcorner,
-                    new StructurePlacementData(),
-                    createRandom(2),
-                    2
-            );
-        } else {
-            EasyMiniGame.LOGGER.info("not right");
-        }
-
-
-    }
-
-    public void clearChests(MinecraftServer server) {
-        for (LootChest chest: this.chestPos) {
-            if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
-
-                ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
-
-                if(chest.lootTable() != null && block != null) {
-                    block.clear();
-                    block.setLootTable(null);
-                } else {
-                    EasyMiniGame.LOGGER.info("failed to clear");
-                }
-
-            } else {
-                EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
-            }
-        }
-    }
-
-    public void genChests(MinecraftServer server) {
-        for(LootChest chest: this.chestPos) {
-
-            if(getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
-
-                ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
-
-                if(chest.lootTable() != null && block != null) {
-                    block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
-                } else {
-                    EasyMiniGame.LOGGER.info("invalid loot table or chest position");
-                }
-
-            } else {
-                EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
-            }
-
-
-
-        }
-    }
-
-    public void killItems(MinecraftServer server) {
-        List<Entity> entities = new ArrayList<>();
-        Predicate<Entity> predicate = entity -> true;
-        getWorld(server).collectEntitiesByType(TypeFilter.instanceOf(ItemEntity.class), predicate,entities);
-
-        for(Entity entity: entities) {
-            entity.kill();
-        }
-    }
-    public void resetMap(MinecraftServer server, boolean reset) {
-
-        killItems(server);
-
-        clearChests(server);
-
-        if(reset) {
-            this.load(server);
-        }
-
-        genChests(server);
-
-    }
-
-    public void save(MinecraftServer server) {
-
-        clearChests(server); // clear chests so no loot is saved
-
-        StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
-
-        //StructureTemplate template = manager.getTemplateOrBlank(new Identifier(this.getName()));
-        StructureTemplate template = manager.getTemplateOrBlank(Identifier.of(this.getName()));
-
-        BlockPos corner1 = getBoundaries().getCorner1();
-        BlockPos corner2 = getBoundaries().getCorner2();
-
-        BlockPos newcorner = BlockPos.min(corner1,corner2);
-
-        EasyMiniGame.LOGGER.info(String.valueOf(newcorner));
-
-        template.saveFromWorld(getWorld(server),
-                newcorner,
-                this.boundary.getDimensions(),
-                false,
-                Blocks.STRUCTURE_VOID);
-
-
-        template.setAuthor("easyminigame");
-
-        try {
-            //manager.saveTemplate(new Identifier(this.getName()));
-            manager.saveTemplate(Identifier.of(this.getName()));
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info(String.valueOf(e));
-        }
-    }
-
-    public boolean addChestPos(BlockPos pos, RegistryKey<LootTable> lootTable) {
-
-        try{
-            if(!this.chestPos.isEmpty()){
-                for(LootChest chest: this.chestPos) {
-                    if(chest.pos().equals(pos)) {
-                        this.chestPos.remove(chest);
-                        return false;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info(String.valueOf(e));
-        }
-
-        this.chestPos.add(new LootChest(pos, lootTable.getValue()));
+  public boolean delChestPos(BlockPos delPos) {
+    for (LootChest chest : this.chestPos) {
+      if (chest.pos().equals(delPos)) {
+        this.chestPos.remove(chest);
         return true;
+      }
     }
+    return false;
+  }
 
-    public int addAllChests(MinecraftServer sever, RegistryKey<LootTable> lootTable) {
-        try{
-            BlockPos corner1 = getBoundaries().getCorner1();
-            BlockPos corner2 = getBoundaries().getCorner2();
+  public List<LootChest> listChestPos() {
+    return new ArrayList<>(this.chestPos);
+  }
 
-            BlockPos newcorner = BlockPos.min(corner1,corner2);
-            Vec3i dimensions = getDimensions();
-            int i = 0;
-
-        /*
-        for(int x = 0; x < newcorner.getX(); x++) {
-            for(int y = 0; y < newcorner.getY(); y++) {
-                for(int z = 0; z < newcorner.getZ(); z++) {
-                    BlockEntity block = getWorld(sever).getBlockEntity(newcorner.add(new Vec3i(x,y,z)));
-                    if(block.getType().equals(BlockEntityType.CHEST)){
-                        i++;
-                        this.chestPos.add(new LootChest(newcorner.add(new Vec3i(x,y,z)), lootTable.getValue()));
-                    }
-                }
-            }
-        }*/
-
-            for(int x = 0; x < dimensions.getX(); x++) {
-                for(int y = 0; y < dimensions.getY(); y++) {
-                    for(int z = 0; z < dimensions.getZ(); z++) {
-                        BlockEntity block = getWorld(sever).getBlockEntity(newcorner.add(new Vec3i(x,y,z)));
-                        if(block != null && block.getType().equals(BlockEntityType.CHEST)){
-                            i++;
-                            this.chestPos.add(new LootChest(newcorner.add(new Vec3i(x,y,z)), lootTable.getValue()));
-                        }
-                    }
-                }
-            }
-            return i;
-        } catch (Exception e ){
-            EasyMiniGame.LOGGER.info("erorr " + e);
-        }
-
-        return 0;
-    }
-
-    public boolean delChestPos(BlockPos delPos) {
-        for(LootChest chest: this.chestPos) {
-            if(chest.pos().equals(delPos)) {
-                this.chestPos.remove(chest);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public List<LootChest> listChestPos() {
-        return new ArrayList<>(this.chestPos);
-    }
-
-    public void clearChestPos() {
-        this.chestPos = new ArrayList<>();
-    }
+  public void clearChestPos() {
+    this.chestPos = new ArrayList<>();
+  }
 
 }
