@@ -22,7 +22,7 @@ public class MixinSpectatorTeleport {
 
     @Shadow public ServerPlayerEntity player;
 
-    @Inject(method = "onSpectatorTeleport", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;teleport(Lnet/minecraft/server/world/ServerWorld;DDDFF)V", shift = At.Shift.BEFORE), cancellable = true)
+    @Inject(method = "onSpectatorTeleport", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;teleport(Lnet/minecraft/server/world/ServerWorld;DDDLjava/util/Set;FFZ)Z", shift = At.Shift.BEFORE), cancellable = true)
     private void inject(SpectatorTeleportC2SPacket packet, CallbackInfo ci, @Local Entity entity){
         if(entity.getWorld().getRegistryKey() != EMG_DIMENSION_KEY && player.getWorld().getRegistryKey() == EMG_DIMENSION_KEY) {
             player.sendMessage(Text.translatable("You can't spectate players out of the game").formatted(Formatting.RED), true);

@@ -17,6 +17,7 @@ import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class DebugCommand {
     public static void enter(CommandContext<ServerCommandSource> ctx) {
@@ -28,7 +29,8 @@ public class DebugCommand {
             RegistryKey<World> destKey = wrapRegistryKey(MiniGameDimension.EMG_DIMENSION_KEY.getValue());
             ServerWorld destination = ctx.getSource().getServer().getWorld(destKey);
 
-            player.teleport(destination, 0, 300,0, 0,0);
+            //player.teleport(destination, 0, 300,0, 0,0);
+            player.teleport(destination, 0, 300, 0, Set.of(), player.getYaw(), player.getPitch(), true);
 
         } else {
             ctx.getSource().sendFeedback(() -> Text.literal("You're already in the dimension!"), false);

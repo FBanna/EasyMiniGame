@@ -110,7 +110,8 @@ public class GameManager {
 
                     ServerPlayerEntity player = playerEntity.get();
 
-                    player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                    //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                    player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
 
                     player.changeGameMode(this.game.getGameMode());
 
@@ -215,7 +216,8 @@ public class GameManager {
 
                     player.sendMessage(Text.literal("your on team " + i).formatted(Formatting.AQUA));
 
-                    player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                    //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                    player.teleport(this.server.getWorld(EMG_DIMENSION_KEY),  pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
                     player.getInventory().clear();
                     //player.changeGameMode(this.game.getGameMode());
                     player.changeGameMode(GameMode.SPECTATOR);
@@ -472,7 +474,9 @@ public class GameManager {
                         int yaw = this.map.getSpawnPoint(i).yaw();
                         //player.get().teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), 0,0);
                         ServerPlayerEntity player = optional.get();
-                        player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                        //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                        player.teleport(this.server.getWorld(EMG_DIMENSION_KEY),  pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
+
                         player.getHungerManager().setSaturationLevel(5);
                         player.getHungerManager().setFoodLevel(20);
                         player.fallDistance = 0;

@@ -168,7 +168,8 @@ public class PlayerState {
         ServerWorld world = server.getWorld(worldkey);
 
         //FabricDimensions.teleport(player, world, new TeleportTarget(pos, new Vec3d(0,0,0), yaw, pitch));
-        player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
+        //player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
+        player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, pitch, true);
         player.fallDistance = 0;
 
         player.changeGameMode(this.gameMode);
