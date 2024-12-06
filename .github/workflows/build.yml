@@ -15,7 +15,7 @@ jobs:
       matrix:
         # Use these Java versions
         java: [
-          23,    # Current Java LTS
+          21,    # Current Java LTS
         ]
     runs-on: ubuntu-latest
     steps:
