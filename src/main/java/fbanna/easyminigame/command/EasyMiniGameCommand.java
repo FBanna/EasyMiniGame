@@ -24,6 +24,9 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import static fbanna.easyminigame.EasyMiniGame.MANAGER;
 
 public class EasyMiniGameCommand {
@@ -35,8 +38,8 @@ public class EasyMiniGameCommand {
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess, CommandManager.RegistrationEnvironment registrationEnvironment) {
 
-
-        final LiteralCommandNode<ServerCommandSource> EasyMiniGameCommand = dispatcher.register(CommandManager.literal("easyminigame")
+        //final LiteralCommandNode<ServerCommandSource> EasyMiniGameCommand =
+        dispatcher.register(CommandManager.literal("emg")
                 .requires(source -> source.hasPermissionLevel(2))
 
                 .then(CommandManager.literal("debug")
@@ -51,14 +54,21 @@ public class EasyMiniGameCommand {
                                     return 1;
                                 })))
 
-                .then(CommandManager.literal("stop")
-                        .executes(ctx -> {
-                            if (MANAGER.playState != PlayStates.STOPPED){
-                                MANAGER.stop();
-                                ctx.getSource().sendFeedback(() -> Text.literal("stopped game!"), false);
+                .then(CommandManager.literal("join")
+                        .executes( ctx -> {
+                            if (MANAGER.playState == PlayStates.WAITING) {
+                                if (!MANAGER.ifPlayerIn(ctx.getSource().getPlayer().getUuid())) {
+                                    MANAGER.addPlayer(ctx.getSource().getPlayer());
+                                    ctx.getSource().sendFeedback(() -> Text.literal("player added").formatted(Formatting.AQUA), false);
+                                } else {
+                                    ctx.getSource().sendFeedback(() -> Text.literal("Your already in the game!").formatted(Formatting.AQUA), false);
+                                }
+                            } else if(MANAGER.playState == PlayStates.PLAYING){
+                                ctx.getSource().sendFeedback(() -> Text.literal("Game is already started!").formatted(Formatting.AQUA), false);
                             } else {
-                                ctx.getSource().sendFeedback(() -> Text.literal("game not running!"), false);
+                                ctx.getSource().sendFeedback(() -> Text.literal("no game running!"), false);
                             }
+
 
                             return 1;
                         }))
@@ -70,6 +80,7 @@ public class EasyMiniGameCommand {
                             PlayCommand.forceStart(ctx);
                             return 1;
                         }))
+
 
                 .then(CommandManager.literal("play")
                         .then(CommandManager.argument("gameName", StringArgumentType.string())
@@ -170,15 +181,18 @@ public class EasyMiniGameCommand {
                                                         }))))
 
                                 .then(CommandManager.literal("reload")
-                                        .executes(ctx -> {
-                                            GameCommand.getReload(ctx);
-                                            return 1;
-                                        })
-                                        .then(CommandManager.argument("boolean", BoolArgumentType.bool())
+                                        .then(CommandManager.literal("get")
                                                 .executes(ctx -> {
-                                                    GameCommand.setReload(ctx);
+                                                    GameCommand.getReload(ctx);
                                                     return 1;
-                                                })))
+                                                }))
+                                        .then(CommandManager.literal("set")
+                                                .then(CommandManager.argument("boolean", BoolArgumentType.bool())
+                                                        .executes(ctx -> {
+                                                            GameCommand.setReload(ctx);
+                                                            return 1;
+                                                        }))))
+
 
                                 .then(CommandManager.literal("map")
                                         .then(CommandManager.literal("create")
@@ -279,7 +293,66 @@ public class EasyMiniGameCommand {
                                                                             return 1;
                                                                         })))))))));
 
-        dispatcher.register(CommandManager.literal("emg").requires(source -> source.hasPermissionLevel(2)).redirect(EasyMiniGameCommand));
+        dispatcher.register(CommandManager.literal("easyminigame")
+
+                .then(CommandManager.literal("stop")
+                        .executes(ctx -> {
+                            if (MANAGER.playState != PlayStates.STOPPED){
+
+                                Optional<UUID> optionalUnoppedPlayer = MANAGER.getOptionalUnoppedPlayer();
+
+                                if (optionalUnoppedPlayer.isPresent() && optionalUnoppedPlayer.get() == ctx.getSource().getPlayer().getUuid()){
+                                    MANAGER.stop();
+                                    ctx.getSource().sendFeedback(() -> Text.literal("stopped game!"), false);
+                                } else {
+                                    ctx.getSource().sendFeedback(() -> Text.literal("You did not start this game! Please start one to run this command"), false);
+                                }
+
+                            } else {
+                                ctx.getSource().sendFeedback(() -> Text.literal("game not running!"), false);
+                            }
+
+                            return 1;
+                        }))
+
+                .then(CommandManager.literal("start")
+                        .executes(ctx -> {
+                            PlayCommand.forceStart(ctx);
+                            return 1;
+                        }))
+
+                .then(CommandManager.literal("play")
+                        .then(CommandManager.argument("gameName", StringArgumentType.string())
+                                .executes(ctx -> {
+                                    PlayCommand.playGame(ctx);
+
+                                    return 1;
+                                })
+                                .then(CommandManager.argument("mapName", StringArgumentType.string())
+                                        .executes(ctx -> {
+                                            PlayCommand.playMap(ctx);
+                                            return 1;
+                                        }))))
+
+                .then(CommandManager.literal("join")
+                        .executes( ctx -> {
+                            if (MANAGER.playState == PlayStates.WAITING) {
+                                if (!MANAGER.ifPlayerIn(ctx.getSource().getPlayer().getUuid())) {
+                                    MANAGER.addPlayer(ctx.getSource().getPlayer());
+                                    ctx.getSource().sendFeedback(() -> Text.literal("player added").formatted(Formatting.AQUA), false);
+                                } else {
+                                    ctx.getSource().sendFeedback(() -> Text.literal("Your already in the game!").formatted(Formatting.AQUA), false);
+                                }
+                            } else if(MANAGER.playState == PlayStates.PLAYING){
+                                ctx.getSource().sendFeedback(() -> Text.literal("Game is already started!").formatted(Formatting.AQUA), false);
+                            } else {
+                                ctx.getSource().sendFeedback(() -> Text.literal("no game running!"), false);
+                            }
+
+
+                            return 1;
+                        })));
+        /*
 
         dispatcher.register(CommandManager.literal("joinemg").requires(ServerCommandSource::isExecutedByPlayer)
                 .executes(ctx -> {
@@ -296,7 +369,7 @@ public class EasyMiniGameCommand {
 
 
                     return 1;
-                }));
+                }));*/
     }
 
 

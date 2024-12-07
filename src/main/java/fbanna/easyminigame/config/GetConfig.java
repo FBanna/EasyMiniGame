@@ -83,15 +83,16 @@ public class GetConfig {
     public static Optional<List<PlayerState>> getSaveStates() {
         Path path = PARENTFOLDER.resolve("playerState.json");
 
-        try{
+        if(Files.exists(path)) {
+            try{
 
-            String json = Files.readString(path);
-            JsonElement element = JsonParser.parseString(json);
-            DataResult<List<PlayerState>> result = PlayerState.CODEC.listOf().parse(JsonOps.INSTANCE, element);
+                String json = Files.readString(path);
+                JsonElement element = JsonParser.parseString(json);
+                DataResult<List<PlayerState>> result = PlayerState.CODEC.listOf().parse(JsonOps.INSTANCE, element);
 
-            if(result.isSuccess()) {
-                return Optional.of(result.getOrThrow());
-            }
+                if(result.isSuccess()) {
+                    return Optional.of(result.getOrThrow());
+                }
 
 
             /*
@@ -100,11 +101,16 @@ public class GetConfig {
             Gson gson = new Gson();
             //SaveStates saveStates = gson.fromJson(json, SaveStates.class);
             List<PlayerState> states = gson.fromJson(json, listType);*/
-            return Optional.empty();
-        } catch (Exception e) {
-            EasyMiniGame.LOGGER.info("eror" + e);
+                return Optional.empty();
+            } catch (Exception e) {
+                EasyMiniGame.LOGGER.info("eror" + e);
+                return Optional.empty();
+            }
+        } else {
             return Optional.empty();
         }
+
+
 
 
     }

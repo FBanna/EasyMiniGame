@@ -17,12 +17,22 @@ import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
+import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 import static fbanna.easyminigame.EasyMiniGame.MANAGER;
 import static fbanna.easyminigame.command.CommandUtil.getGame;
 import static fbanna.easyminigame.command.CommandUtil.getMap;
 
 public class PlayCommand {
+
+    private static Optional<UUID> getUnoppedUUID (CommandContext<ServerCommandSource> ctx) {
+        if(ctx.getSource().getPlayer().getPermissionLevel() < 2) {
+
+            return Optional.of(ctx.getSource().getPlayer().getUuid());
+        }
+        return Optional.empty();
+    }
 
     public static void playGame(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
         Game game = getGame(ctx);
@@ -55,7 +65,7 @@ public class PlayCommand {
             return;
         }
 
-        MANAGER.playMap(game, chosenMap);
+        MANAGER.playMap(game, chosenMap, getUnoppedUUID(ctx));
 
 
 
@@ -78,7 +88,7 @@ public class PlayCommand {
             //return;
         }
 
-        MANAGER.playMap(game,map);
+        MANAGER.playMap(game,map,getUnoppedUUID(ctx));
     }
 
     public static void forceStart(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
@@ -94,6 +104,15 @@ public class PlayCommand {
             throw new SimpleCommandExceptionType(Text.literal("Un-even teams! Needs a multiple of " + MANAGER.getTeamCount())).create();
             //ctx.getSource().sendFeedback(() -> Text.literal("Un-even teams! Needs a multiple of " + MANAGER.getTeamCount()), false);
             //return;
+        }
+
+        Optional<UUID> optionalPlayer = getUnoppedUUID(ctx);
+
+        if(optionalPlayer.isPresent() && MANAGER.getOptionalUnoppedPlayer().isPresent()) {
+
+            if(optionalPlayer.get() != MANAGER.getOptionalUnoppedPlayer().get()) {
+                throw new SimpleCommandExceptionType(Text.literal("You did not start this game! Please start one to run this command")).create();
+            }
         }
 
         MANAGER.startGame();

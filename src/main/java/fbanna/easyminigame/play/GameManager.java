@@ -10,6 +10,7 @@ import fbanna.easyminigame.game.map.GameMap;
 import fbanna.easyminigame.timer.Call;
 import fbanna.easyminigame.timer.Timer;
 import fbanna.easyminigame.timer.TimerEvent;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CobwebBlock;
@@ -37,8 +38,7 @@ import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Collectors;
 
-import static fbanna.easyminigame.EasyMiniGame.MANAGER;
-import static fbanna.easyminigame.EasyMiniGame.TIMER;
+import static fbanna.easyminigame.EasyMiniGame.*;
 import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 
 public class GameManager {
@@ -51,6 +51,8 @@ public class GameManager {
     private List<UUID> playingPlayers = new ArrayList<>();
     private List<List<UUID>> teams = new ArrayList<List<UUID>>();
     private List<List<Integer>> lives = new ArrayList<>();
+    private Optional<UUID> unoppedPlayer;
+
 
 
 
@@ -67,9 +69,13 @@ public class GameManager {
 
     }
 
-    public void playMap(Game game, GameMap map) {
+    public void playMap(Game game, GameMap map, Optional<UUID> optionalUnoppedPlayer) {
         this.game = game;
         this.map = map;
+
+        if(optionalUnoppedPlayer.isPresent()){
+            this.unoppedPlayer = optionalUnoppedPlayer;
+        }
 
         this.teams = new ArrayList<>();
         this.lives = new ArrayList<>();
@@ -90,7 +96,7 @@ public class GameManager {
     private void sendInvite() {
         for(ServerPlayerEntity player: this.server.getPlayerManager().getPlayerList()) {
             //player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/joinemg"))), false);
-            player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/joinemg")).withFormatting(Formatting.YELLOW)), false);
+            player.sendMessage(Text.literal("click to join game!").setStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/easyminigame join")).withFormatting(Formatting.YELLOW)), false);
         }
     }
 
@@ -129,6 +135,8 @@ public class GameManager {
 
         playState = PlayStates.PLAYING;
 
+
+
         TIMER.register(new TimerEvent(20, new Call() {
             private int loops = 6;
             @Override
@@ -140,7 +148,7 @@ public class GameManager {
                 if(loops != 0) {
                     TIMER.register(new TimerEvent(20, this));
                 } else {
-                    EasyMiniGame.LOGGER.info("lower gates");
+                    //EasyMiniGame.LOGGER.info("lower gates");
                     MANAGER.releasePlayers();
                 }
             }
@@ -273,6 +281,8 @@ public class GameManager {
 
         List<PlayerState> temp = new ArrayList<>();
 
+        this.unoppedPlayer = Optional.empty();
+
         for(int i = 0; i < this.players.size(); i++){
             Optional<ServerPlayerEntity> player = UUIDtoPlayer(this.players.get(i).getUuid());
 
@@ -361,7 +371,71 @@ public class GameManager {
 
     }
 
-    public boolean playDeath(UUID uuid) {
+    public boolean onDeath(UUID uuid) {
+        if(this.game != null && this.playState == PlayStates.PLAYING) {
+
+            for( int i = 0; i < this.teams.size(); i++ ) {
+                for (int j = 0; j < this.teams.get(i).size(); j++) {
+
+                    if (this.teams.get(i).get(j).equals(uuid)) {
+
+                        this.lives.get(i).set(j, this.lives.get(i).get(j) - 1);
+
+                        if(this.lives.get(i).get(j) <= 0) {
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean checkWin() {
+
+        if (this.game != null && this.playState == PlayStates.PLAYING) {
+
+            switch (this.game.getWinCondition()) {
+                case WinConditions.LAST_TEAM -> {
+
+
+                    int team = teamAlive();
+
+                    if (team >= 0) {
+
+                        String winningPlayers = "";
+
+                        for (UUID uuid : this.teams.get(team)) {
+
+                            Optional<ServerPlayerEntity> optionalPlayer = UUIDtoPlayer(uuid);
+
+                            if (optionalPlayer.isPresent()) {
+                                winningPlayers = winningPlayers + ", " + optionalPlayer.get().getName().getString();
+                            }
+                        }
+                        this.messagePlayers(Text.of("Team %s wins%s".formatted(team, winningPlayers)).copy().formatted(Formatting.AQUA), false);
+                        this.stop();
+
+                    } else if (team == -2) {
+                        this.messagePlayers(Text.of("All teams are dead!").copy().formatted(Formatting.AQUA), false);
+                        this.stop();
+
+                    } else {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+
+
+        /*
 
         try{
 
@@ -418,15 +492,13 @@ public class GameManager {
         } catch (Exception e) {
             EasyMiniGame.LOGGER.info(String.valueOf("a| " + e));
         }
-        return false;
-
-    }
+        return false;*/
 
     public int teamAlive() {
-        int winning = -1;
+        int winning = -2;
         for (int i = 0; i < this.teams.size(); i++) {
             if(teamIsAlive(i)) {
-                if(winning == -1) {
+                if(winning == -2) {
                     winning = i;
                 } else {
                     return -1;
@@ -438,7 +510,7 @@ public class GameManager {
 
     public boolean teamIsAlive(int i) {
         for(int j: this.lives.get(i)) {
-            EasyMiniGame.LOGGER.info("player has " +j);
+            //EasyMiniGame.LOGGER.info("player has " +j);
             if(j > 0) {
                 return true;
             }
@@ -502,4 +574,7 @@ public class GameManager {
         return this.game.getPlayers()/this.map.getTeams();
     }
 
+    public Optional<UUID> getOptionalUnoppedPlayer() {
+        return this.unoppedPlayer;
+    }
 }

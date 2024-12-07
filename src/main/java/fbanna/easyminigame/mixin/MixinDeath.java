@@ -3,6 +3,7 @@ package fbanna.easyminigame.mixin;
 
 import com.mojang.authlib.GameProfile;
 import fbanna.easyminigame.EasyMiniGame;
+import fbanna.easyminigame.play.PlayStates;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
@@ -67,27 +68,32 @@ public abstract class MixinDeath extends PlayerEntity{
 
 
 
-        if(this.getWorld().getRegistryKey() == EMG_DIMENSION_KEY) {
+        if(this.getWorld().getRegistryKey() == EMG_DIMENSION_KEY && MANAGER.playState == PlayStates.PLAYING) {
             //EasyMiniGame.LOGGER.info("huhhhhh");
             this.setHealth(20);
 
             if(this.interactionManager.getGameMode() != GameMode.SPECTATOR) {
                 this.drop((ServerWorld) this.getWorld(), damageSource);
 
-                boolean result = MANAGER.playDeath(this.getUuid());
+                boolean isFinal = MANAGER.onDeath(this.getUuid());
+                boolean isWin = MANAGER.checkWin();
 
 
-                if(result){
+                if(isFinal && !isWin){ // is final kill
 
                     this.changeGameMode(GameMode.SPECTATOR);
                     MANAGER.messagePlayers(Text.of(this.getName().getString() + " was final killed"), false);
 
-                } else {
+                } else if (isFinal && isWin){ // is final last kill
+                    MANAGER.messagePlayers(Text.of(this.getName().getString() + " was final killed"), false);
+
+                } else if (!isFinal && !isWin) { // is normal kill
                     Text text = this.getDamageTracker().getDeathMessage();
                     //MANAGER.messagePlayers(Text.of(this.getName().getString() + " was massacred"));
                     //MANAGER.messagePlayers(text.getWithStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.AQUA))));
                     MANAGER.messagePlayers(text, false);
                     MANAGER.respawnPlayer(this.getUuid());
+
                 }
 
             } else {
