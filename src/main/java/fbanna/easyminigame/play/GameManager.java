@@ -384,8 +384,6 @@ public class GameManager {
                         if(this.lives.get(i).get(j) <= 0) {
                             return true;
                         }
-                    } else {
-                        return false;
                     }
                 }
             }
