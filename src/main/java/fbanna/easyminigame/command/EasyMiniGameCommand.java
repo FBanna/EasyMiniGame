@@ -81,6 +81,19 @@ public class EasyMiniGameCommand {
                             return 1;
                         }))
 
+                .then(CommandManager.literal("stop")
+                        .executes(ctx -> {
+                            if (MANAGER.playState != PlayStates.STOPPED){
+
+                                MANAGER.stop();
+                                ctx.getSource().sendFeedback(() -> Text.literal("stopped game!"), false);
+
+                            } else {
+                                ctx.getSource().sendFeedback(() -> Text.literal("game not running!"), false);
+                            }
+                            return 1;
+                        }))
+
 
                 .then(CommandManager.literal("play")
                         .then(CommandManager.argument("gameName", StringArgumentType.string())

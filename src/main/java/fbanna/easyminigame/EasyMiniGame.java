@@ -15,9 +15,15 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.dimension.DimensionTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.nucleoid.fantasy.Fantasy;
+import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeWorldHandle;
 
 import java.nio.file.Path;
 
@@ -84,13 +90,26 @@ public class EasyMiniGame implements ModInitializer {
 
 		});
 
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+
+		ServerPlayConnectionEvents.JOIN.register((handler, sender,server) -> {
 
 			//joinDelay = 40;
 			//player = handler.getPlayer();
+			Fantasy fantasy = Fantasy.get(server);
 
-			TIMER.register(new TimerEvent(40, () -> MANAGER.isNeeded(handler.getPlayer())));
+			RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+					.setDimensionType(DimensionTypes.OVERWORLD)
+					.setDifficulty(Difficulty.HARD)
+					.setGameRule(GameRules.DO_DAYLIGHT_CYCLE, false)
+					.setGenerator(server.getOverworld().getChunkManager().getChunkGenerator())
+					.setSeed(1234L);
 
+			RuntimeWorldHandle worldHandle = fantasy.getOrOpenPersistentWorld(Identifier.of("easyminigame", "test"), worldConfig);
+			worldHandle.delete();
+			worldHandle.
+
+			//TIMER.register(new TimerEvent(40, () -> MANAGER.isNeeded(handler.getPlayer())));
+			//MANAGER.isNeeded(handler.getPlayer());
 		});
 		/*
 
