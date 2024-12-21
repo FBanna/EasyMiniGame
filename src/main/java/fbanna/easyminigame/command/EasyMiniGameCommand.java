@@ -86,7 +86,7 @@ public class EasyMiniGameCommand {
 
                                     GameInstance instance = CommandUtil.getInstance(ctx);
                                     if (instance.playState == PlayStates.WAITING) {
-                                        if (!instance.ifPlayerIn(ctx.getSource().getPlayer().getUuid())) {
+                                        if (!instance.ifPlayerIn(ctx.getSource().getPlayer())) {
                                             instance.addPlayer(ctx.getSource().getPlayer());
                                             ctx.getSource().sendFeedback(() -> Text.literal("player added").formatted(Formatting.AQUA), false);
                                         } else {
@@ -116,7 +116,8 @@ public class EasyMiniGameCommand {
                                     GameInstance instance = CommandUtil.getInstance(ctx);
                                     if (instance.playState != PlayStates.STOPPED){
 
-                                        instance.stop();
+                                        //instance.stop();
+                                        MANAGER.deleteGame(instance);
                                         ctx.getSource().sendFeedback(() -> Text.literal("stopped game!"), false);
 
                                     } else {
@@ -348,7 +349,8 @@ public class EasyMiniGameCommand {
                                     UUID player = instance.getID().getCreator();
 
                                     if (player == ctx.getSource().getPlayer().getUuid()){
-                                        instance.stop();
+                                        //instance.stop();
+                                        MANAGER.deleteGame(instance);
                                         ctx.getSource().sendFeedback(() -> Text.literal("stopped game!"), false);
                                     } else {
                                         ctx.getSource().sendFeedback(() -> Text.literal("You did not start this game! Please start one to run this command"), false);
@@ -385,7 +387,7 @@ public class EasyMiniGameCommand {
                             .executes( ctx -> {
                                 GameInstance instance = CommandUtil.getInstance(ctx);
                                 if (instance.playState == PlayStates.WAITING) {
-                                    if (!instance.ifPlayerIn(ctx.getSource().getPlayer().getUuid())) {
+                                    if (!instance.ifPlayerIn(ctx.getSource().getPlayer())) {
                                         instance.addPlayer(ctx.getSource().getPlayer());
                                         ctx.getSource().sendFeedback(() -> Text.literal("player added").formatted(Formatting.AQUA), false);
                                     } else {

@@ -17,7 +17,7 @@ public class GameID {
     private final Game game;
     private final GameMap map;
     private final Integer ID;
-    private final RuntimeWorldHandle worldHandle;
+    private final ServerWorld world;
 
     public GameID(UUID creator, Game game, GameMap map, List<GameID> otherGames) {
         this.creator = creator;
@@ -37,7 +37,7 @@ public class GameID {
         }
 
         this.ID = newID;
-        this.worldHandle = DIMENSION.createDimension(this.toString());
+        this.world = DIMENSION.createDimension(this.toString()).asWorld();
 
     }
 
@@ -80,7 +80,7 @@ public class GameID {
     }
 
     public ServerWorld getWorld(){
-        return this.worldHandle.asWorld();
+        return this.world;
     }
 
     public Game getGame(){

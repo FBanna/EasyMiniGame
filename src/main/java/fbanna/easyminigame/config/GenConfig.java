@@ -14,6 +14,7 @@ import fbanna.easyminigame.play.PlayerState;
 import net.minecraft.component.type.UnbreakableComponent;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
@@ -88,24 +89,29 @@ public class GenConfig {
 
     }
 
-    public static boolean nbtSaveStatesMake(List<UUID> players){
-        for (UUID uuid: players){
 
-            Optional<ServerPlayerEntity> player = EasyMiniGame.MANAGER.UUIDtoPlayer(uuid);
-            if (player.isPresent()) {
-                try{
-                    NbtCompound nbt = player.get().writeNbt(new NbtCompound());
-                    Path path = Files.createTempFile(PARENTFOLDER, player.get().getUuidAsString() + "-", ".dat");
-                    NbtIo.writeCompressed(nbt, path);
-                } catch (Exception e){
-                    LOGGER.info("failed to write!");
-                }
+    //change name
+    public static boolean makeSaveStates(NbtCompound nbt){
 
+
+        try{
+            Path path = PARENTFOLDER.resolve("playerdata.dat");
+
+            if( !Files.exists(path) ) {
+                Files.createFile(path);
             }
+            //Path path = Files.createTempFile(PARENTFOLDER, "playerdata", ".dat");
 
+            NbtIo.writeCompressed(nbt, path);
+            return true;
+        } catch (Exception e){
+            LOGGER.info("failed to write!");
         }
-        return true;
+        return false;
     }
+
+
+    /*
 
     public static boolean makeSaveStates(List<PlayerState> states) {
 
@@ -155,7 +161,7 @@ public class GenConfig {
                 }
 
                 return false;
-            }*/
+            }
         } catch (Exception e ) {
             EasyMiniGame.LOGGER.info("error in gen " + e);
         }
@@ -175,9 +181,9 @@ public class GenConfig {
             return true;
         } catch (Exception e) {
             return false;
-        }*/
+        }
         return false;
-    }
+    }*/
 
     public static boolean makeGameConfig(Game game) {
 

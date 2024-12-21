@@ -3,6 +3,9 @@ package fbanna.easyminigame.config;
 import fbanna.easyminigame.EasyMiniGame;
 import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.map.GameMap;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +13,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 import static fbanna.easyminigame.EasyMiniGame.PARENTFOLDER;
 
 public class DelConfig {
@@ -23,6 +27,49 @@ public class DelConfig {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static Boolean deletePlayerData(NbtCompound nbt, ServerPlayerEntity player) {
+        Path path = PARENTFOLDER.resolve("playerState.dat");
+
+        if(Files.exists(path)) {
+            try {
+
+                NbtCompound nbtlist = NbtIo.read(path);
+
+                if (nbtlist != nbt) {
+                    LOGGER.info("files do not match! PANIC");
+                    return false;
+                }
+
+                if(nbt != null) {
+                    nbt.remove(player.getUuidAsString());
+
+
+                    if(nbt.isEmpty()) {
+                        deleteSaveStates();
+                    } else {
+                        GenConfig.makeSaveStates(nbt);
+                    }
+
+                    return true;
+                }
+
+
+
+
+                /*
+                if(nbtlist.contains(player.getUuidAsString())) {
+                    NbtCompound nbt = nbtlist.getCompound(player.getUuidAsString());
+                }
+                */
+
+
+            } catch (Exception e) {
+                LOGGER.info("error! |a " + e);
+            }
+        }
+        return false;
     }
 
     public static Boolean deleteSaveStates() {

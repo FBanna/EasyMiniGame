@@ -28,9 +28,9 @@ public class GameInstance {
     private final MinecraftServer server;
     private final GameID ID;
     public PlayStates playState = PlayStates.STOPPED;
-    private List<PlayerState> players = new ArrayList<>();
-    private List<UUID> playingPlayers = new ArrayList<>();
-    private List<List<UUID>> teams = new ArrayList<>();
+    //private List<PlayerState> players = new ArrayList<>();
+    private List<ServerPlayerEntity> players = new ArrayList<>();
+    private List<List<ServerPlayerEntity>> teams = new ArrayList<>();
     private List<List<Integer>> lives = new ArrayList<>();
 
 
@@ -49,15 +49,6 @@ public class GameInstance {
             playState = PlayStates.WAITING;
             sendInvite();
         }
-
-        // FIX this
-
-        Optional<List<PlayerState>> players = GetConfig.getSaveStates();
-        if(players.isPresent()) {
-
-            this.players = new ArrayList<>(players.get());
-        }
-
     }
 
 
@@ -73,25 +64,17 @@ public class GameInstance {
     public void releasePlayers() {
 
         int i = 0;
-        for(List<UUID> team: this.teams) {
+        for(List<ServerPlayerEntity> team: this.teams) {
 
             Vec3d pos = this.ID.getMap().getSpawnPoint(i).pos().toCenterPos().offset(Direction.UP, 0.5);
             int yaw = this.ID.getMap().getSpawnPoint(i).yaw();
 
-            for(UUID uuid: team) {
-
-                Optional<ServerPlayerEntity> playerEntity = MANAGER.UUIDtoPlayer(uuid);
-
-                if(playerEntity.isPresent()) {
-
-                    ServerPlayerEntity player = playerEntity.get();
+            for(ServerPlayerEntity player: team) {
 
                     //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
-                    player.teleport(this.ID.getWorld(), pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
+                player.teleport(this.ID.getWorld(), pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
 
-                    player.changeGameMode(this.ID.getGame().getGameMode());
-
-                }
+                player.changeGameMode(this.ID.getGame().getGameMode());
 
 
             }
@@ -177,9 +160,9 @@ public class GameInstance {
 
         this.ID.getMap().resetMap(this.server, this.ID.getWorld(), this.ID.getGame().getReload());
 
-        Collections.shuffle(this.playingPlayers);
+        Collections.shuffle(this.players);
 
-        this.teams = new ArrayList<>(chop(this.playingPlayers));
+        this.teams = new ArrayList<>(chop(this.players));
 
         /*
 
@@ -199,43 +182,40 @@ public class GameInstance {
         } catch (Exception e ){
             EasyMiniGame.LOGGER.info(String.valueOf("b| " + e));
         }*/
-        this.playingPlayers = new ArrayList<>();
-        GenConfig.nbtSaveStatesMake(this.playingPlayers);
+        MANAGER.registerPlayers(this.players);
+        //this.players = new ArrayList<>();
+
 
 
         int i = 0;
-        for(List<UUID> team: this.teams) {
+        for(List<ServerPlayerEntity> team: this.teams) {
             Vec3d pos = this.ID.getMap().getSpawnPoint(i).pos().toCenterPos().offset(Direction.UP, 0.5);
             int yaw = this.ID.getMap().getSpawnPoint(i).yaw();
 
             this.lives.add(new ArrayList<>());
-            for(UUID uuid: team) {
+            for(ServerPlayerEntity player: team) {
 
-                Optional<ServerPlayerEntity> playerEntity = MANAGER.UUIDtoPlayer(uuid);
 
-                if(playerEntity.isPresent()) {
 
-                    this.lives.get(i).add(this.ID.getGame().getLives());
+                this.lives.get(i).add(this.ID.getGame().getLives());
 
-                    ServerPlayerEntity player = playerEntity.get();
+                player.sendMessage(Text.literal("your on team " + i).formatted(Formatting.AQUA));
 
-                    player.sendMessage(Text.literal("your on team " + i).formatted(Formatting.AQUA));
+                //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+                player.teleport(this.ID.getWorld(), pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
+                player.getInventory().clear();
+                //player.changeGameMode(this.game.getGameMode());
+                player.changeGameMode(GameMode.SPECTATOR);
+                player.setHealth(20);
+                player.getHungerManager().setSaturationLevel(5);
+                player.getHungerManager().setFoodLevel(20);
+                player.fallDistance = 0;
+                player.experienceProgress = 0;
+                player.extinguish();
+                player.setExperienceLevel(0);
+                player.clearStatusEffects();
 
-                    //player.teleport(this.server.getWorld(EMG_DIMENSION_KEY), pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
-                    player.teleport(this.ID.getWorld(), pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
-                    player.getInventory().clear();
-                    //player.changeGameMode(this.game.getGameMode());
-                    player.changeGameMode(GameMode.SPECTATOR);
-                    player.setHealth(20);
-                    player.getHungerManager().setSaturationLevel(5);
-                    player.getHungerManager().setFoodLevel(20);
-                    player.fallDistance = 0;
-                    player.experienceProgress = 0;
-                    player.extinguish();
-                    player.setExperienceLevel(0);
-                    player.clearStatusEffects();
 
-                }
 
 
             }
@@ -244,9 +224,9 @@ public class GameInstance {
 
     }
 
-    public boolean ifPlayerIn(UUID player) {
-        for(UUID uuid: this.playingPlayers) {
-            if(uuid.equals(player)) {
+    public boolean ifPlayerIn(ServerPlayerEntity testPlayer) {
+        for(ServerPlayerEntity player: this.players) {
+            if(testPlayer == player) {
                 return true;
             }
         }
@@ -256,11 +236,11 @@ public class GameInstance {
     public void addPlayer(ServerPlayerEntity player) {
 
 
-        if(this.playingPlayers.size() < this.ID.getGame().getPlayers()) {
+        if(this.players.size() < this.ID.getGame().getPlayers()) {
 
-            this.playingPlayers.add(player.getUuid());
+            this.players.add(player);
 
-            if(this.playingPlayers.size() == this.ID.getGame().getPlayers()) {
+            if(this.players.size() == this.ID.getGame().getPlayers()) {
                 startGame();
             }
         } else {
@@ -276,9 +256,16 @@ public class GameInstance {
             this.ID.getMap().killItems(this.ID.getWorld());
         }
 
+
+        MANAGER.unregisterPlayers(players);
+
+
+        /*
         List<PlayerState> temp = new ArrayList<>();
 
         //this.unoppedPlayer = Optional.empty();
+
+
 
         for(int i = 0; i < this.players.size(); i++){
             Optional<ServerPlayerEntity> player = MANAGER.UUIDtoPlayer(this.players.get(i).getUuid());
@@ -299,19 +286,21 @@ public class GameInstance {
         } else {
             DelConfig.deleteSaveStates();
 
-        }
+        }*/
+
+        DIMENSION.deleteDimension(this.ID.toString());
 
         //this.game = null;
         //this.map = null;
         this.teams.clear(); // TEMP
-        this.playingPlayers.clear();
+        //this.playingPlayers.clear();
         this.playState = PlayStates.STOPPED;
     }
 
-    private  List<List<UUID>> chop(List<UUID> list) {
+    private  List<List<ServerPlayerEntity>> chop(List<ServerPlayerEntity> list) {
         int length = this.ID.getGame().getPlayers()/this.ID.getMap().getTeams();
 
-        List<List<UUID>> tempTeams = new ArrayList<List<UUID>>();
+        List<List<ServerPlayerEntity>> tempTeams = new ArrayList<>();
 
         final int N = list.size();
         for (int i = 0; i < N; i += length) {
@@ -323,7 +312,7 @@ public class GameInstance {
     }
 
 
-
+    /*
     public void isNeeded(ServerPlayerEntity player) {
 
         if(this.players.size() != 0 && playState != PlayStates.PLAYING) {
@@ -357,7 +346,7 @@ public class GameInstance {
             }
         }
 
-    }
+    }*/
 
     public boolean onDeath(UUID uuid) {
         if(this.ID.getGame() != null && this.playState == PlayStates.PLAYING) {
@@ -393,20 +382,25 @@ public class GameInstance {
 
                         String winningPlayers = "";
 
-                        for (UUID uuid : this.teams.get(team)) {
+                        for (ServerPlayerEntity player : this.teams.get(team)) {
 
-                            Optional<ServerPlayerEntity> optionalPlayer = MANAGER.UUIDtoPlayer(uuid);
+                            if (isOnline(player)) {
 
-                            if (optionalPlayer.isPresent()) {
-                                winningPlayers = winningPlayers + ", " + optionalPlayer.get().getName().getString();
+                                winningPlayers = winningPlayers + ", " + player.getName().getString();
+
                             }
+
+
+
                         }
                         this.messagePlayers(Text.of("Team %s wins%s".formatted(team, winningPlayers)).copy().formatted(Formatting.AQUA), false);
-                        this.stop();
+                        //this.stop();
+                        MANAGER.deleteGame(this);
 
                     } else if (team == -2) {
                         this.messagePlayers(Text.of("All teams are dead!").copy().formatted(Formatting.AQUA), false);
-                        this.stop();
+                        //this.stop();
+                        MANAGER.deleteGame(this);
 
                     } else {
                         return false;
@@ -480,6 +474,17 @@ public class GameInstance {
         }
         return false;*/
 
+    private boolean isOnline(ServerPlayerEntity player) {
+
+        for (ServerPlayerEntity onlinePlayers : this.server.getPlayerManager().getPlayerList()) {
+            if (onlinePlayers == player){
+                return true;
+            }
+
+        }
+        return false;
+    }
+
     public int teamAlive() {
         int winning = -2;
         for (int i = 0; i < this.teams.size(); i++) {
@@ -508,10 +513,10 @@ public class GameInstance {
         for( int i = 0; i < this.teams.size(); i++ ) {
             for( int j = 0; j < this.teams.get(i).size(); j++ ) {
 
-                Optional<ServerPlayerEntity> player = MANAGER.UUIDtoPlayer(this.teams.get(i).get(j));
+                ServerPlayerEntity player = this.teams.get(i).get(j);
 
-                if(player.isPresent()) {
-                    player.get().sendMessage(message, overlay);
+                if(isOnline(player)) {
+                    player.sendMessage(message, overlay);
                 }
 
             }

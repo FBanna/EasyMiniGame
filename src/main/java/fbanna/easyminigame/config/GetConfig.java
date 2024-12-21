@@ -11,6 +11,9 @@ import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.map.GameMap;
 import fbanna.easyminigame.play.GameManager;
 import fbanna.easyminigame.play.PlayerState;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtSizeTracker;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -80,38 +83,25 @@ public class GetConfig {
         }
     }
 
-    public static Optional<List<PlayerState>> getSaveStates() {
-        Path path = PARENTFOLDER.resolve("playerState.json");
+    public static NbtCompound getSaveStates() {
+        Path path = PARENTFOLDER.resolve("playerState.dat");
 
         if(Files.exists(path)) {
             try{
 
-                String json = Files.readString(path);
-                JsonElement element = JsonParser.parseString(json);
-                DataResult<List<PlayerState>> result = PlayerState.CODEC.listOf().parse(JsonOps.INSTANCE, element);
+                NbtCompound nbtlist = NbtIo.readCompressed(path, NbtSizeTracker.ofUnlimitedBytes());
 
-                if(result.isSuccess()) {
-                    return Optional.of(result.getOrThrow());
+                if(nbtlist == null) {
+                    return new NbtCompound();
                 }
 
 
-            /*
-            Type listType = new TypeToken<ArrayList<PlayerState>>(){}.getType();
-
-            Gson gson = new Gson();
-            //SaveStates saveStates = gson.fromJson(json, SaveStates.class);
-            List<PlayerState> states = gson.fromJson(json, listType);*/
-                return Optional.empty();
+                return nbtlist;
             } catch (Exception e) {
                 EasyMiniGame.LOGGER.info("eror" + e);
-                return Optional.empty();
             }
-        } else {
-            return Optional.empty();
         }
-
-
-
+        return new NbtCompound();
 
     }
 
