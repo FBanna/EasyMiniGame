@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 import static net.minecraft.block.entity.StructureBlockBlockEntity.createRandom;
 
 public class GameMap {
@@ -104,9 +103,9 @@ public class GameMap {
     return this.boundary;
   }
 
-  public Boolean setBoundaryPosition(BlockPos corner1, MinecraftServer server) {
+  public Boolean setBoundaryPosition(BlockPos corner1, ServerWorld world) {
 
-    Optional<Vec3i> dimensions = getTemplateDimensions(server);
+    Optional<Vec3i> dimensions = getTemplateDimensions(world);
     if (dimensions.isPresent()) {
       this.boundary.setBoundaries(corner1, corner1.add(dimensions.get()));
       return true;
@@ -152,12 +151,8 @@ public class GameMap {
     return DelConfig.deleteMap(game, this);
   }
 
-  public ServerWorld getWorld(MinecraftServer server) {
-    return server.getWorld(EMG_DIMENSION_KEY);
-  }
-
-  public Optional<Vec3i> getTemplateDimensions(MinecraftServer server) {
-    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+  public Optional<Vec3i> getTemplateDimensions(ServerWorld world) {
+    StructureTemplateManager manager = world.getStructureTemplateManager();
 
     // Optional<StructureTemplate> template = manager.getTemplate(new
     // Identifier(this.getName()));
@@ -169,7 +164,7 @@ public class GameMap {
     return Optional.empty();
   }
 
-  public void load(MinecraftServer server) {
+  public void load(ServerWorld world) {
 
     // CLEAR ITEMS
     /*
@@ -192,7 +187,7 @@ public class GameMap {
      * }
      */
 
-    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+    StructureTemplateManager manager = world.getStructureTemplateManager();
 
     // Optional<StructureTemplate> template = manager.getTemplate(new
     // Identifier(this.getName()));
@@ -205,7 +200,7 @@ public class GameMap {
 
     if (template.isPresent()) {
       template.get().place(
-          getWorld(server),
+          world,
           newcorner,
           newcorner,
           new StructurePlacementData(),
@@ -217,11 +212,11 @@ public class GameMap {
 
   }
 
-  public void clearChests(MinecraftServer server) {
+  public void clearChests(ServerWorld world) {
     for (LootChest chest : this.chestPos) {
-      if (getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
+      if (world.getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
 
-        ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+        ChestBlockEntity block = (ChestBlockEntity) world.getBlockEntity(chest.pos());
 
         if (chest.lootTable() != null && block != null) {
           block.clear();
@@ -236,12 +231,12 @@ public class GameMap {
     }
   }
 
-  public void genChests(MinecraftServer server) {
+  public void genChests(ServerWorld world) {
     for (LootChest chest : this.chestPos) {
 
-      if (getWorld(server).getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
+      if (world.getBlockEntity(chest.pos()) instanceof ChestBlockEntity) {
 
-        ChestBlockEntity block = (ChestBlockEntity) getWorld(server).getBlockEntity(chest.pos());
+        ChestBlockEntity block = (ChestBlockEntity) world.getBlockEntity(chest.pos());
 
         if (chest.lootTable() != null && block != null) {
           block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
@@ -256,35 +251,35 @@ public class GameMap {
     }
   }
 
-  public void killItems(MinecraftServer server) {
+  public void killItems(ServerWorld world) {
     List<Entity> entities = new ArrayList<>();
     Predicate<Entity> predicate = entity -> true;
-    getWorld(server).collectEntitiesByType(TypeFilter.instanceOf(ItemEntity.class), predicate, entities);
+    world.collectEntitiesByType(TypeFilter.instanceOf(ItemEntity.class), predicate, entities);
 
     for (Entity entity : entities) {
-      entity.kill(getWorld(server));
+      entity.kill(world);
     }
   }
 
-  public void resetMap(MinecraftServer server, boolean reset) {
+  public void resetMap(MinecraftServer server, ServerWorld world, boolean reset) {
 
-    killItems(server);
+    killItems(world);
 
-    clearChests(server);
+    clearChests(world);
 
     if (reset) {
-      this.load(server);
+      this.load(world);
     }
 
-    genChests(server);
+    genChests(world);
 
   }
 
-  public void save(MinecraftServer server) {
+  public void save(ServerWorld world) {
 
-    clearChests(server); // clear chests so no loot is saved
+    clearChests(world); // clear chests so no loot is saved
 
-    StructureTemplateManager manager = getWorld(server).getStructureTemplateManager();
+    StructureTemplateManager manager = world.getStructureTemplateManager();
 
     // StructureTemplate template = manager.getTemplateOrBlank(new
     // Identifier(this.getName()));
@@ -297,7 +292,7 @@ public class GameMap {
 
     EasyMiniGame.LOGGER.info(String.valueOf(newcorner));
 
-    template.saveFromWorld(getWorld(server),
+    template.saveFromWorld(world,
         newcorner,
         this.boundary.getDimensions(),
         false,
@@ -332,7 +327,7 @@ public class GameMap {
     return true;
   }
 
-  public int addAllChests(MinecraftServer sever, RegistryKey<LootTable> lootTable) {
+  public int addAllChests(ServerWorld world, RegistryKey<LootTable> lootTable) {
     try {
       BlockPos corner1 = getBoundaries().getCorner1();
       BlockPos corner2 = getBoundaries().getCorner2();
@@ -360,7 +355,7 @@ public class GameMap {
       for (int x = 0; x < dimensions.getX(); x++) {
         for (int y = 0; y < dimensions.getY(); y++) {
           for (int z = 0; z < dimensions.getZ(); z++) {
-            BlockEntity block = getWorld(sever).getBlockEntity(newcorner.add(new Vec3i(x, y, z)));
+            BlockEntity block = world.getBlockEntity(newcorner.add(new Vec3i(x, y, z)));
             if (block != null && block.getType().equals(BlockEntityType.CHEST)) {
               i++;
               this.chestPos.add(new LootChest(newcorner.add(new Vec3i(x, y, z)), lootTable.getValue()));

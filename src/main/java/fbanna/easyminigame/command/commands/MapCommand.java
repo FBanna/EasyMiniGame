@@ -25,6 +25,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.apache.http.config.Registry;
 
+import static fbanna.easyminigame.EasyMiniGame.DIMENSION;
 import static fbanna.easyminigame.command.CommandUtil.*;
 
 
@@ -151,7 +152,7 @@ public class MapCommand {
         BlockPos corner1 = BlockPosArgumentType.getBlockPos(ctx, "corner1");
 
 
-        Boolean result = map.setBoundaryPosition(corner1, ctx.getSource().getServer());
+        Boolean result = map.setBoundaryPosition(corner1, ctx.getSource().getWorld());
 
         if(!result){
             throw new SimpleCommandExceptionType(Text.of("Failed to set boundaries!")).create();
@@ -240,7 +241,7 @@ public class MapCommand {
         GameMap map = getMap(ctx);
 
 
-        if (ctx.getSource().getWorld().getRegistryKey() != MiniGameDimension.EMG_DIMENSION_KEY) {
+        if (!DIMENSION.isMiniGameDimension(ctx.getSource().getWorld())) {
             throw new SimpleCommandExceptionType(Text.of("You're not in the dimension!")).create();
 
             //ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
@@ -256,7 +257,7 @@ public class MapCommand {
             return;
         }*/
 
-        map.save(ctx.getSource().getServer());
+        map.save(ctx.getSource().getWorld());
         ctx.getSource().sendFeedback(() -> Text.literal("saved map!"), false);
 
     }
@@ -265,7 +266,7 @@ public class MapCommand {
 
         GameMap map = getMap(ctx);
 
-        if (ctx.getSource().getWorld().getRegistryKey() != MiniGameDimension.EMG_DIMENSION_KEY) {
+        if (!DIMENSION.isMiniGameDimension(ctx.getSource().getWorld())) {
             throw new SimpleCommandExceptionType(Text.of("You're not in the dimension!")).create();
 
             //ctx.getSource().sendFeedback(() -> Text.literal("You're not in the dimension!"), false);
@@ -278,7 +279,7 @@ public class MapCommand {
             return;
         }*/
 
-        map.load(ctx.getSource().getServer());
+        map.load(ctx.getSource().getWorld());
         ctx.getSource().sendFeedback(() -> Text.literal("loaded map!"), false);
 
     }
@@ -324,7 +325,7 @@ public class MapCommand {
             //return;
         }
 
-        int result = map.addAllChests(ctx.getSource().getServer(), optionalTable.get());
+        int result = map.addAllChests(ctx.getSource().getWorld(), optionalTable.get());
 
         GenConfig.makeMapConfig(game, map);
 

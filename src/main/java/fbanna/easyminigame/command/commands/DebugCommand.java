@@ -19,15 +19,19 @@ import net.minecraft.world.World;
 import java.util.Optional;
 import java.util.Set;
 
+import static fbanna.easyminigame.EasyMiniGame.DIMENSION;
+
 public class DebugCommand {
     public static void enter(CommandContext<ServerCommandSource> ctx) {
 
         ServerPlayerEntity player = ctx.getSource().getPlayer();
 
-        if (ctx.getSource().getWorld().getRegistryKey() != MiniGameDimension.EMG_DIMENSION_KEY && player != null) {
+        if (!DIMENSION.isMiniGameDimension(ctx.getSource().getWorld()) && player != null) {
 
-            RegistryKey<World> destKey = wrapRegistryKey(MiniGameDimension.EMG_DIMENSION_KEY.getValue());
-            ServerWorld destination = ctx.getSource().getServer().getWorld(destKey);
+
+            //RegistryKey<World> destKey = wrapRegistryKey(MiniGameDimension.EMG_DIMENSION_KEY.getValue());
+            //ServerWorld destination = ctx.getSource().getServer().getWorld(destKey);
+            ServerWorld destination = DIMENSION.createDimension("test").asWorld();
 
             //player.teleport(destination, 0, 300,0, 0,0);
             player.teleport(destination, 0, 300, 0, Set.of(), player.getYaw(), player.getPitch(), true);
@@ -41,41 +45,9 @@ public class DebugCommand {
 
         ServerPlayerEntity player = ctx.getSource().getPlayer();
 
-        if (ctx.getSource().getWorld().getRegistryKey() == MiniGameDimension.EMG_DIMENSION_KEY && player != null) {
+        if (DIMENSION.isMiniGameDimension(ctx.getSource().getWorld()) && player != null) {
             //player.getRespawnTarget(true, TeleportTarget.PostDimensionTransition.new)
             player.teleportTo(player.getRespawnTarget(true, Entity::resetPosition));
-
-            /*
-
-            if (player.getSpawnPointDimension() != null && player.getSpawnPointPosition() != null){
-
-                if (player.getSpawnPointDimension() != MiniGameDimension.EMG_DIMENSION_KEY) {
-
-                    //BlockPos pos = player.getSpawnPointPosition();
-
-                    //ServerWorld destination = ctx.getSource().getServer().getWorld(player.getSpawnPointDimension());
-                    //Optional<Vec3d> pos = PlayerEntity.findRespawnPosition(destination, respawnPosition, 0, true, true);
-
-                    //if (pos){
-                    //ctx.getSource().getPlayer().teleport(destination, pos.getX(), pos.getY(), pos.getZ(), 0,0);
-
-                    //} else {
-
-                    //    worldRespawn(ctx);
-
-                    //}
-
-                } else {
-
-                    ctx.getSource().sendFeedback(() -> Text.literal("Your respawn is in this dimension!"), false);
-
-                }
-
-            } else {
-
-                worldRespawn(ctx);
-
-            }*/
 
         } else {
 

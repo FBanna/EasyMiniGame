@@ -79,14 +79,3 @@ jobs:
           version-type: release
           files: |
             artifacts/!(*-@(dev|sources|javadoc)).jar
-          #  artifacts/*-@(dev|sources|javadoc).jar
-          #files: artifacts/*.jar
-
-        #uses: cloudnode-pro/modrinth-publish@1.0.0
-        #with:
-          #token: ${{ secrets.MODRINTH_TOKEN }}
-          #project: gyxlmoNR
-          #file: "artifacts/*.jar"
-          #loaders: "fabric"
-          #api-domain: api.modrinth.com
-

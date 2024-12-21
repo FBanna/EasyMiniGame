@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.map.GameMap;
+import fbanna.easyminigame.play.GameInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -15,7 +16,21 @@ import org.objectweb.asm.TypeReference;
 
 import java.util.Optional;
 
+import static fbanna.easyminigame.EasyMiniGame.MANAGER;
+
 public class CommandUtil {
+
+  public static GameInstance getInstance(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+    String ID = StringArgumentType.getString(ctx, "gameID");
+
+    Optional<GameInstance> gameInstance = MANAGER.getInstance(ID);
+
+    if(gameInstance.isPresent()) {
+      return gameInstance.get();
+    } else {
+      throw new SimpleCommandExceptionType(Text.of("Could not find that game instance!")).create();
+    }
+  }
 
   public static Game getGame(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
     String name = StringArgumentType.getString(ctx, "gameName");

@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 
 @Mixin(PlayerManager.class)
 public class MixinJoin {
@@ -24,12 +23,15 @@ public class MixinJoin {
     @Shadow MinecraftServer server;
 
     @Inject(method = "onPlayerConnect", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;setServerWorld(Lnet/minecraft/server/world/ServerWorld;)V", shift = At.Shift.BEFORE))
-    private void mixin(ClientConnection connection, ServerPlayerEntity player, ConnectedClientData clientData, CallbackInfo ci, @Local(ordinal = 1) ServerWorld serverWorld, @Local(ordinal = 0) LocalRef<ServerWorld> serverWorld2){
+    private void mixin(ClientConnection connection, ServerPlayerEntity player, ConnectedClientData clientData, CallbackInfo ci, @Local(ordinal = 0) ServerWorld serverWorld, @Local(ordinal = 1) LocalRef<ServerWorld> serverWorld2){
 
         EasyMiniGame.LOGGER.info(serverWorld.getRegistryKey().toString() + ", " + serverWorld2.get().getRegistryKey().toString());
+
+        /*
         if( serverWorld == this.server.getWorld(EMG_DIMENSION_KEY) ) {
             serverWorld2.set(this.server.getWorld(ServerWorld.NETHER));
-        }
+        }*/
 
     }
 }
+

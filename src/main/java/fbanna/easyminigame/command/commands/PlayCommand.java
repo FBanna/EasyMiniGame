@@ -26,12 +26,8 @@ import static fbanna.easyminigame.command.CommandUtil.getMap;
 
 public class PlayCommand {
 
-    private static Optional<UUID> getUnoppedUUID (CommandContext<ServerCommandSource> ctx) {
-        if(ctx.getSource().getPlayer().getPermissionLevel() < 2) {
-
-            return Optional.of(ctx.getSource().getPlayer().getUuid());
-        }
-        return Optional.empty();
+    private static UUID getUUID (CommandContext<ServerCommandSource> ctx) {
+        return ctx.getSource().getPlayer().getUuid();
     }
 
     public static void playGame(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
@@ -50,11 +46,12 @@ public class PlayCommand {
         }
             //GameManager manager = new GameManager(ctx.getSource().getServer())
 
-        if(MANAGER.playState != PlayStates.STOPPED) {
-            throw new SimpleCommandExceptionType(Text.literal("Game already started or waiting! Please stop existing game")).create();
+
+        //if(MANAGER.playState != PlayStates.STOPPED) {
+        //    throw new SimpleCommandExceptionType(Text.literal("Game already started or waiting! Please stop existing game")).create();
             //ctx.getSource().sendFeedback(() -> Text.literal("game already started or waiting! Please stop last game"), false);
             //return;
-        }
+        //}
 
         Random rand = new Random();
         ArrayList<GameMap> maps = optionalGameMaps.get();
@@ -65,7 +62,9 @@ public class PlayCommand {
             return;
         }
 
-        MANAGER.playMap(game, chosenMap, getUnoppedUUID(ctx));
+        //MANAGER.playMap(game, chosenMap, getUUID(ctx));
+
+        MANAGER.createGame(game, chosenMap, getUUID(ctx), false);
 
 
 
@@ -76,11 +75,11 @@ public class PlayCommand {
         Game game = getGame(ctx);
         GameMap map = getMap(ctx);
 
-        if(MANAGER.playState != PlayStates.STOPPED) {
-            throw new SimpleCommandExceptionType(Text.literal("Game already started or waiting! Please stop existing game")).create();
+        //if(MANAGER.playState != PlayStates.STOPPED) {
+        //    throw new SimpleCommandExceptionType(Text.literal("Game already started or waiting! Please stop existing game")).create();
             //ctx.getSource().sendFeedback(() -> Text.literal("game already started or waiting! Please stop last game"), false);
             //return;
-        }
+        //}
 
         if (game.getPlayers() % map.getTeams() != 0) {
             throw new SimpleCommandExceptionType(Text.literal("Un-even teams! Please set a valid team number for map " + map.getName())).create();
@@ -88,10 +87,13 @@ public class PlayCommand {
             //return;
         }
 
-        MANAGER.playMap(game,map,getUnoppedUUID(ctx));
+        //MANAGER.playMap(game,map,getUnoppedUUID(ctx));
+        MANAGER.createGame(game,map,getUUID(ctx),false);
     }
 
     public static void forceStart(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+
+        /*
 
         if(MANAGER.playState != PlayStates.WAITING) {
             throw new SimpleCommandExceptionType(Text.literal("not waiting for players!")).create();
@@ -115,7 +117,9 @@ public class PlayCommand {
             }
         }
 
-        MANAGER.startGame();
+        MANAGER.startGame();*/
+
+        throw new SimpleCommandExceptionType(Text.literal("please implement Findlay!")).create();
 
     }
 }

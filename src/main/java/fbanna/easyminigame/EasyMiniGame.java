@@ -27,7 +27,6 @@ import xyz.nucleoid.fantasy.RuntimeWorldHandle;
 
 import java.nio.file.Path;
 
-import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
 
 public class EasyMiniGame implements ModInitializer {
 	// This logger is used to write text to the console and the log file.
@@ -38,10 +37,12 @@ public class EasyMiniGame implements ModInitializer {
 
 	public static final Path PARENTFOLDER = Path.of("./easyminigame");
 	public static final Path CONFIG = Path.of("config.json");
+
 	public static GameManager MANAGER;
 
 	public static Timer TIMER = new Timer();
 
+	public static MiniGameDimension DIMENSION;
 
 
 	//private int countdown = 101;
@@ -50,12 +51,14 @@ public class EasyMiniGame implements ModInitializer {
 
     @Override
 	public void onInitialize() {
-		MiniGameDimension.register();
+
 		CommandRegistrationCallback.EVENT.register(EasyMiniGameCommand::register);
 
 		ServerLifecycleEvents.SERVER_STARTED.register((MinecraftServer server) -> {
+
+			DIMENSION = new MiniGameDimension(server);
 			MANAGER = new GameManager(server);
-			MANAGER.stop();
+			//MANAGER.stop();
 		});
 
 
@@ -90,23 +93,12 @@ public class EasyMiniGame implements ModInitializer {
 
 		});
 
-
+		/*
 		ServerPlayConnectionEvents.JOIN.register((handler, sender,server) -> {
 
 			//joinDelay = 40;
 			//player = handler.getPlayer();
-			Fantasy fantasy = Fantasy.get(server);
 
-			RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
-					.setDimensionType(DimensionTypes.OVERWORLD)
-					.setDifficulty(Difficulty.HARD)
-					.setGameRule(GameRules.DO_DAYLIGHT_CYCLE, false)
-					.setGenerator(server.getOverworld().getChunkManager().getChunkGenerator())
-					.setSeed(1234L);
-
-			RuntimeWorldHandle worldHandle = fantasy.getOrOpenPersistentWorld(Identifier.of("easyminigame", "test"), worldConfig);
-			worldHandle.delete();
-			worldHandle.
 
 			//TIMER.register(new TimerEvent(40, () -> MANAGER.isNeeded(handler.getPlayer())));
 			//MANAGER.isNeeded(handler.getPlayer());

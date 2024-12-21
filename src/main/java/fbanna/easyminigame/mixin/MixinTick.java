@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static fbanna.easyminigame.dimension.MiniGameDimension.EMG_DIMENSION_KEY;
+import static fbanna.easyminigame.EasyMiniGame.DIMENSION;
 
 @Mixin(FireBlock.class)
 public class MixinTick {
@@ -27,7 +27,9 @@ public class MixinTick {
     @ModifyExpressionValue(method = "scheduledTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/GameRules;getBoolean(Lnet/minecraft/world/GameRules$Key;)Z"))
     private boolean Inject(boolean original, @Local(argsOnly = true) ServerWorld world) {
         //return original || world.getRegistryKey() == EMG_DIMENSION_KEY;
-        if(world.getRegistryKey() == EMG_DIMENSION_KEY) {
+
+        //NEED THIS AGAIN
+        if(DIMENSION.isMiniGameDimension(world)) {
             return false;
         } else {
             return original;

@@ -13,6 +13,8 @@ import fbanna.easyminigame.play.GameManager;
 import fbanna.easyminigame.play.PlayerState;
 import net.minecraft.component.type.UnbreakableComponent;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -23,7 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 import static fbanna.easyminigame.EasyMiniGame.PARENTFOLDER;
 
 public class GenConfig {
@@ -82,6 +86,25 @@ public class GenConfig {
             return  false;
         }
 
+    }
+
+    public static boolean nbtSaveStatesMake(List<UUID> players){
+        for (UUID uuid: players){
+
+            Optional<ServerPlayerEntity> player = EasyMiniGame.MANAGER.UUIDtoPlayer(uuid);
+            if (player.isPresent()) {
+                try{
+                    NbtCompound nbt = player.get().writeNbt(new NbtCompound());
+                    Path path = Files.createTempFile(PARENTFOLDER, player.get().getUuidAsString() + "-", ".dat");
+                    NbtIo.writeCompressed(nbt, path);
+                } catch (Exception e){
+                    LOGGER.info("failed to write!");
+                }
+
+            }
+
+        }
+        return true;
     }
 
     public static boolean makeSaveStates(List<PlayerState> states) {
