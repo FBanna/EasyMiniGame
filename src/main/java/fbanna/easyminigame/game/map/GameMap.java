@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 import static net.minecraft.block.entity.StructureBlockBlockEntity.createRandom;
 
 public class GameMap {
@@ -94,7 +95,7 @@ public class GameMap {
     try {
       this.spawnPoints[team] = position;
     } catch (Exception e) {
-      EasyMiniGame.LOGGER.info("errr" + e);
+      LOGGER.info("errr" + e);
     }
 
   }
@@ -199,6 +200,7 @@ public class GameMap {
     BlockPos newcorner = BlockPos.min(corner1, corner2);
 
     if (template.isPresent()) {
+      //LOGGER.info(world.getRegistryKey().getValue().toString() + ", " + corner1.toString());
       template.get().place(
           world,
           newcorner,
@@ -207,7 +209,7 @@ public class GameMap {
           createRandom(2),
           2);
     } else {
-      EasyMiniGame.LOGGER.info("not right");
+      LOGGER.info("not right");
     }
 
   }
@@ -222,11 +224,11 @@ public class GameMap {
           block.clear();
           block.setLootTable(null);
         } else {
-          EasyMiniGame.LOGGER.info("failed to clear");
+          LOGGER.info("failed to clear");
         }
 
       } else {
-        EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+        LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
       }
     }
   }
@@ -241,11 +243,11 @@ public class GameMap {
         if (chest.lootTable() != null && block != null) {
           block.setLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, chest.lootTable()));
         } else {
-          EasyMiniGame.LOGGER.info("invalid loot table or chest position");
+          LOGGER.info("invalid loot table or chest position");
         }
 
       } else {
-        EasyMiniGame.LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
+        LOGGER.info("no chest at coordinate " + chest.pos().toShortString());
       }
 
     }
@@ -290,7 +292,7 @@ public class GameMap {
 
     BlockPos newcorner = BlockPos.min(corner1, corner2);
 
-    EasyMiniGame.LOGGER.info(String.valueOf(newcorner));
+    LOGGER.info(String.valueOf(newcorner));
 
     template.saveFromWorld(world,
         newcorner,
@@ -304,7 +306,7 @@ public class GameMap {
       // manager.saveTemplate(new Identifier(this.getName()));
       manager.saveTemplate(Identifier.of(this.getName()));
     } catch (Exception e) {
-      EasyMiniGame.LOGGER.info(String.valueOf(e));
+      LOGGER.info(String.valueOf(e));
     }
   }
 
@@ -320,7 +322,7 @@ public class GameMap {
         }
       }
     } catch (Exception e) {
-      EasyMiniGame.LOGGER.info(String.valueOf(e));
+      LOGGER.info(String.valueOf(e));
     }
 
     this.chestPos.add(new LootChest(pos, lootTable.getValue()));
@@ -365,7 +367,7 @@ public class GameMap {
       }
       return i;
     } catch (Exception e) {
-      EasyMiniGame.LOGGER.info("erorr " + e);
+      LOGGER.info("erorr " + e);
     }
 
     return 0;

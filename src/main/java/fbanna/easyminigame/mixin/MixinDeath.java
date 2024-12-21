@@ -42,33 +42,21 @@ public abstract class MixinDeath extends PlayerEntity{
 
     //@Shadow public abstract PlayerInventory getInventory();
 
-    @Shadow @Final public ServerPlayerInteractionManager interactionManager;
 
     public MixinDeath(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
         super(world, pos, yaw, gameProfile);
     }
 
+    @Shadow @Final public ServerPlayerInteractionManager interactionManager;
     @Shadow public abstract boolean changeGameMode(GameMode gameMode);
-
-    @Shadow public abstract SyncedClientOptions getClientOptions();
-
-    //@Shadow public abstract boolean damage(DamageSource source, float amount);
-
-
-    @Shadow @Final public MinecraftServer server;
-
-    @Shadow public abstract void resetStat(Stat<?> stat);
-
-    //@Shadow public abstract boolean teleport(ServerWorld world, double destX, double destY, double destZ, Set<PositionFlag> flags, float yaw, float pitch);
-
-    @Shadow protected abstract void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition);
+    @Shadow public abstract ServerWorld getServerWorld();
 
     @Inject(method = "onDeath", at = @At("HEAD"), cancellable = true)
     private void inject(DamageSource damageSource, CallbackInfo ci) {
 
         
 
-        Optional<GameInstance> optionalGameInstance = MANAGER.getInstance(damageSource.getAttacker().getWorld().getRegistryKey().getValue().getPath());
+        Optional<GameInstance> optionalGameInstance = MANAGER.getInstance(this.getServerWorld().getRegistryKey().getValue().getPath());
 
 
         if(optionalGameInstance.isEmpty()) {
