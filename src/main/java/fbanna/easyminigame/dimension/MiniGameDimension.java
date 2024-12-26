@@ -1,6 +1,8 @@
 package fbanna.easyminigame.dimension;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
 import fbanna.easyminigame.EasyMiniGame;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
@@ -12,12 +14,16 @@ import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.dimension.DimensionTypes;
+import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraft.world.gen.chunk.ChunkGenerators;
+import net.minecraft.world.gen.treedecorator.TreeDecorator;
 import org.apache.logging.log4j.core.jmx.Server;
 import xyz.nucleoid.fantasy.Fantasy;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.fantasy.RuntimeWorldHandle;
+import xyz.nucleoid.fantasy.util.ChunkGeneratorSettingsProvider;
 
 import java.sql.Time;
 import java.util.ArrayList;
@@ -45,10 +51,15 @@ public class MiniGameDimension {
 
         this.worldConfig = new RuntimeWorldConfig()
                 .setDimensionType(DimensionTypes.OVERWORLD)
+                .setGenerator(
+                        Registries.CHUNK_GENERATOR.get(Identifier.of("minecraft:flat"))
+                )
+        /*this.worldConfig = new RuntimeWorldConfig()
+                .setDimensionType(DimensionTypes.OVERWORLD)
                 .setDifficulty(Difficulty.HARD)
                 .setGameRule(GameRules.DO_DAYLIGHT_CYCLE, false)
                 .setGameRule(GameRules.DO_WEATHER_CYCLE, false)
-                .setGenerator(server.getOverworld().getChunkManager().getChunkGenerator());
+                .setGenerator(server.getOverworld().getChunkManager().getChunkGenerator());*/
     }
 
     public RuntimeWorldHandle createDimension(String name) {

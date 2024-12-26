@@ -77,6 +77,11 @@ public class EasyMiniGameCommand {
                                 .executes(ctx -> {
                                     DebugCommand.exit(ctx);
                                     return 1;
+                                }))
+                        .then(CommandManager.literal("stop")
+                                .executes( ctx -> {
+                                    MANAGER.deleteAllGames();
+                                    return 1;
                                 })))
 
                 .then(CommandManager.literal("join")

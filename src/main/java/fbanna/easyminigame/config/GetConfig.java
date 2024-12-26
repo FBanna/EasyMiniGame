@@ -84,7 +84,7 @@ public class GetConfig {
     }
 
     public static NbtCompound getSaveStates() {
-        Path path = PARENTFOLDER.resolve("playerState.dat");
+        Path path = PARENTFOLDER.resolve("playerdata.dat");
 
         if(Files.exists(path)) {
             try{

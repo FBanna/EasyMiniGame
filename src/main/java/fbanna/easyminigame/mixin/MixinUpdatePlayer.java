@@ -86,34 +86,38 @@ public abstract class MixinUpdatePlayer implements EmgPlayerManagerAccess {
 
         ServerPlayerEntity player = new ServerPlayerEntity(this.server, world, oldPlayer.getGameProfile(), oldPlayer.getClientOptions());
         player.networkHandler = oldPlayer.networkHandler;
-        player.setId(player.getId());
+        player.setId(oldPlayer.getId());
+        player.setServerWorld(world);
         player.readGameModeNbt(nbt);
         player.readNbt(nbt);
 
 
-        player.setServerWorld(world);
-        LOGGER.info("here?");
-
-
 
         LOGGER.info("here?");
 
 
 
+        LOGGER.info("here?");
 
 
 
 
+
+
+
+
+
+
+        WorldProperties worldProperties = world.getLevelProperties();
+
+        //player.networkHandler.sendPacket(new PlayerRespawnS2CPacket(player.createCommonPlayerSpawnInfo(world), b));
+        player.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
         player.refreshPositionAndAngles(
                 player.getX(),player.getY(), player.getZ(),
                 player.getYaw(), player.getPitch()
         );
 
-        WorldProperties worldProperties = world.getLevelProperties();
-
-        //player.networkHandler.sendPacket(new PlayerRespawnS2CPacket(player.createCommonPlayerSpawnInfo(world), b));
-        player.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
         //player.networkHandler.sendPacket(new PlayerSpawnPositionS2CPacket(serverWorld.getSpawnPos(), serverWorld.getSpawnAngle()));
         player.networkHandler.sendPacket(new DifficultyS2CPacket(worldProperties.getDifficulty(), worldProperties.isDifficultyLocked()));
         player.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(player.experienceProgress, player.totalExperience, player.experienceLevel));

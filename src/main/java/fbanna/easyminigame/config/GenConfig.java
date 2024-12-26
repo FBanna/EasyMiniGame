@@ -25,8 +25,10 @@ import net.minecraft.world.World;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 import static fbanna.easyminigame.EasyMiniGame.PARENTFOLDER;
@@ -99,6 +101,14 @@ public class GenConfig {
 
             if( !Files.exists(path) ) {
                 Files.createFile(path);
+            }
+
+            LOGGER.info(nbt.toString());
+
+            if(nbt.isEmpty()) {
+                LOGGER.info("deleting save");
+                DelConfig.deleteSaveStates();
+                return true;
             }
             //Path path = Files.createTempFile(PARENTFOLDER, "playerdata", ".dat");
 

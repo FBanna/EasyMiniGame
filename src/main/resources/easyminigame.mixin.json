@@ -7,8 +7,7 @@
     "MixinDeath",
     "MixinJoin",
     "MixinSpectatorTeleport",
-    "MixinTick",
-    "MixinUpdatePlayer"
+    "MixinTick"
   ],
   "injectors": {
     "defaultRequire": 1

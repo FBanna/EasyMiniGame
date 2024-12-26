@@ -30,7 +30,7 @@ public class DelConfig {
     }
 
     public static Boolean deletePlayerData(NbtCompound nbt, ServerPlayerEntity player) {
-        Path path = PARENTFOLDER.resolve("playerState.dat");
+        Path path = PARENTFOLDER.resolve("playerdata.dat");
 
         if(Files.exists(path)) {
             try {
@@ -74,12 +74,13 @@ public class DelConfig {
 
     public static Boolean deleteSaveStates() {
         try {
-            Path path = PARENTFOLDER.resolve("playerState.json");
+            Path path = PARENTFOLDER.resolve("playerdata.dat");
             if(Files.exists(path)) {
                 Files.delete(path);
             }
             return true;
         } catch (Exception e) {
+            LOGGER.info("failed to delete!");
             return false;
         }
     }
