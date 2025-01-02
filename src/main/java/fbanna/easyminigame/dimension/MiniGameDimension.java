@@ -2,9 +2,11 @@ package fbanna.easyminigame.dimension;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import fbanna.easyminigame.EasyMiniGame;
+import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -15,9 +17,8 @@ import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.gen.GeneratorOptions;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
-import net.minecraft.world.gen.chunk.ChunkGenerators;
+import net.minecraft.world.gen.WorldPresets;
+import net.minecraft.world.gen.chunk.*;
 import net.minecraft.world.gen.treedecorator.TreeDecorator;
 import org.apache.logging.log4j.core.jmx.Server;
 import xyz.nucleoid.fantasy.Fantasy;
@@ -26,10 +27,7 @@ import xyz.nucleoid.fantasy.RuntimeWorldHandle;
 import xyz.nucleoid.fantasy.util.ChunkGeneratorSettingsProvider;
 
 import java.sql.Time;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 
@@ -52,8 +50,18 @@ public class MiniGameDimension {
         this.worldConfig = new RuntimeWorldConfig()
                 .setDimensionType(DimensionTypes.OVERWORLD)
                 .setGenerator(
-                        Registries.CHUNK_GENERATOR.get(Identifier.of("minecraft:flat"))
-                )
+                        new FlatChunkGenerator(
+                                new FlatChunkGeneratorConfig(
+                                        Optional.empty(),
+                                        RegistryEntry.of(null),
+                                        List.of()
+                                )
+                        )
+                ).setDimensionType(DimensionTypes.OVERWORLD)
+                .setDifficulty(Difficulty.HARD)
+                .setGameRule(GameRules.DO_DAYLIGHT_CYCLE, false)
+                .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
+                //.set
         /*this.worldConfig = new RuntimeWorldConfig()
                 .setDimensionType(DimensionTypes.OVERWORLD)
                 .setDifficulty(Difficulty.HARD)
