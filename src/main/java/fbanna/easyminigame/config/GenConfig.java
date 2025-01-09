@@ -197,11 +197,12 @@ public class GenConfig {
 
     public static boolean makeGameConfig(Game game) {
 
+
         DataResult<JsonElement> result = Game.CODEC.encodeStart(JsonOps.INSTANCE, game);
         if (result.isSuccess()) {
             JsonElement jsonElement = result.getOrThrow();
 
-            String json = jsonElement.toString();
+            String json = jsonElement.getAsString();
             byte[] byteString = json.getBytes();
 
             Path path = PARENTFOLDER.resolve(Path.of(game.getName())).resolve(Path.of("config.json"));

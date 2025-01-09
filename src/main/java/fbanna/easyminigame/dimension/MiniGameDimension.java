@@ -49,6 +49,8 @@ public class MiniGameDimension {
 
         this.worldConfig = new RuntimeWorldConfig()
                 .setDimensionType(DimensionTypes.OVERWORLD)
+                .setGenerator(server.getOverworld().getChunkManager().getChunkGenerator())
+                /*
                 .setGenerator(
                         new FlatChunkGenerator(
                                 new FlatChunkGeneratorConfig(
@@ -57,7 +59,8 @@ public class MiniGameDimension {
                                         List.of()
                                 )
                         )
-                ).setDimensionType(DimensionTypes.OVERWORLD)
+                )*/
+                .setDimensionType(DimensionTypes.OVERWORLD)
                 .setDifficulty(Difficulty.HARD)
                 .setGameRule(GameRules.DO_DAYLIGHT_CYCLE, false)
                 .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
@@ -72,6 +75,15 @@ public class MiniGameDimension {
 
     public RuntimeWorldHandle createDimension(String name) {
         RuntimeWorldHandle handle = fantasy.openTemporaryWorld(Identifier.of("easyminigame", name), this.worldConfig);
+        this.handles.add(handle);
+
+        return handle;
+    }
+
+    public RuntimeWorldHandle createDimension(String name, RegistryEntry<DimensionType> dimension) {
+        this.worldConfig.setDimensionType(dimension);
+        RuntimeWorldHandle handle = fantasy.openTemporaryWorld(Identifier.of("easyminigame", name), this.worldConfig);
+
         this.handles.add(handle);
 
         return handle;

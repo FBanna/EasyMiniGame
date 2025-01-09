@@ -14,7 +14,14 @@ import fbanna.easyminigame.play.PlayerState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtSizeTracker;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.dimension.DimensionType;
+import oshi.util.tuples.Pair;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -161,6 +168,33 @@ public class GetConfig {
         Gson gson = new Gson();
         GameMap map = gson.fromJson(json, GameMap.class);
         return map;*/
+    }
+
+    public static Optional<RegistryEntry<DimensionType>> getGameMapDimensionType(Game game, GameMap map){
+
+        Path path = PARENTFOLDER.resolve(game.getName()).resolve(map.getName()).resolve("world/dimension.json");
+
+        if (Files.exists(path)) {
+
+            try {
+                String json = Files.readString(path);
+
+                JsonElement element = JsonParser.parseString(json);
+                DataResult<DimensionType> result = DimensionType.CODEC.parse(JsonOps.INSTANCE, element);
+
+                if (result.isSuccess()) {
+                    return Optional.of(RegistryEntry.of(result.getOrThrow()));
+                }
+
+                return Optional.empty();
+
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+
+        }
+        return Optional.empty();
+
     }
 
 

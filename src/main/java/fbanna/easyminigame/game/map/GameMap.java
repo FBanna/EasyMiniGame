@@ -42,6 +42,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.dimension.DimensionType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -55,8 +56,8 @@ public class GameMap {
   private final String name;
   private final int teams;
   private final Boundary boundary = new Boundary();
-  // private BlockPos[] spawnPoints;
   private SpawnPoint[] spawnPoints;
+
 
   private List<LootChest> chestPos = new ArrayList<>();
 

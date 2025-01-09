@@ -9,6 +9,7 @@ import fbanna.easyminigame.game.WinConditions;
 import fbanna.easyminigame.game.map.GameMap;
 import fbanna.easyminigame.timer.Call;
 import fbanna.easyminigame.timer.TimerEvent;
+import net.minecraft.resource.ResourcePackProvider;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -32,6 +33,7 @@ public class GameInstance {
     private List<ServerPlayerEntity> players = new ArrayList<>();
     private List<List<ServerPlayerEntity>> teams = new ArrayList<>();
     private List<List<Integer>> lives = new ArrayList<>();
+    private ResourcePackProvider provider;
 
 
 

@@ -46,7 +46,7 @@ public class GameManager {
         this.games.add(
                 new GameInstance(
                         this.server,
-                        new GameID(creator,game,map,ids),
+                        new GameID(creator,game,map,ids, this.server),
                         isDebug
                 )
         );

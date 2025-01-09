@@ -1,16 +1,25 @@
 package fbanna.easyminigame.play;
 
+import fbanna.easyminigame.config.GetConfig;
 import fbanna.easyminigame.game.Game;
 import fbanna.easyminigame.game.map.GameMap;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.dimension.DimensionTypeRegistrar;
+import net.minecraft.world.dimension.DimensionTypes;
 import xyz.nucleoid.fantasy.RuntimeWorldHandle;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static fbanna.easyminigame.EasyMiniGame.DIMENSION;
+import static fbanna.easyminigame.EasyMiniGame.LOGGER;
 
 public class GameID {
     private final UUID creator;
@@ -18,11 +27,21 @@ public class GameID {
     private final GameMap map;
     private final Integer ID;
     private final ServerWorld world;
+    private final RegistryEntry<DimensionType> dimension;
 
-    public GameID(UUID creator, Game game, GameMap map, List<GameID> otherGames) {
+    public GameID(UUID creator, Game game, GameMap map, List<GameID> otherGames, MinecraftServer server) {
         this.creator = creator;
         this.game = game;
         this.map = map;
+        Optional<RegistryEntry<DimensionType>> optional = GetConfig.getGameMapDimensionType(game,map);
+
+        if (optional.isPresent()) {
+            this.dimension = optional.get();
+        } else {
+            this.dimension = server.getRegistryManager().getOrThrow(RegistryKeys.DIMENSION_TYPE).getEntry(DimensionTypes.OVERWORLD_ID).get();
+        }
+
+        //LOGGER.info("height: " +dimension.height());
 
 
         Integer newID = 0;
@@ -37,7 +56,7 @@ public class GameID {
         }
 
         this.ID = newID;
-        this.world = DIMENSION.createDimension(this.toString()).asWorld();
+        this.world = DIMENSION.createDimension(this.toString(), dimension).asWorld();
 
     }
 
